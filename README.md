@@ -13,9 +13,12 @@ LibAI_bert_large_pretrain_graph nl24_nah16_hs1024_FP16_actrue DP2_MP2_PP2_zerofa
 
 
 - 全局loss曲线对比
+
 ![LibAI_bert_large_pretrain_graph_nl24_nah16_hs1024_FP16_actrue_DP2_MP2_PP2_zerofalse_stage0_mbs32_gbs512_acc8_1n8g,png](https://user-images.githubusercontent.com/86536994/229665268-7308888f-6009-4134-84e7-32c8df7cbcd2.png)
 
 - 50步loss曲线对比
+
 ![LibAI_bert_large_pretrain_graph_nl24_nah16_hs1024_FP16_actrue_DP2_MP2_PP2_zerofalse_stage0_mbs32_gbs512_acc8_1n8g_50_220,png](https://user-images.githubusercontent.com/86536994/229665753-0ffc2f22-b413-483f-b7e7-c016341da707.png)
 - 100步loss曲线对比
+
 ![LibAI_bert_large_pretrain_graph_nl24_nah16_hs1024_FP16_actrue_DP2_MP2_PP2_zerofalse_stage0_mbs32_gbs512_acc8_1n8g_100_220,png](https://user-images.githubusercontent.com/86536994/229665787-89d524f7-70af-48d4-bd47-a5a363ce3a36.png)
