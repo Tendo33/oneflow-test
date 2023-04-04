@@ -1,0 +1,948 @@
+[04/03 07:13:43 libai]: Rank of current process: 0. World size: 8
+[04/03 07:13:43 libai]: Command line arguments: Namespace(config_file='configs/bert_large_pretrain.py', resume=False, eval_only=False, fast_dev_run=False, opts=['model.cfg.hidden_dropout_prob=0.0', 'model.cfg.attention_probs_dropout_prob=0.0', 'model.cfg.bias_dropout_fusion=false', 'model.cfg.hidden_layers=24', 'model.cfg.hidden_size=1024', 'model.cfg.num_attention_heads=16', 'model.cfg.intermediate_size=4096', 'model.cfg.ffn_hidden_size=4096', 'model.cfg.head_size=64', 'graph.enabled=true', 'train.dist.pipeline_num_layers=24', 'train.train_micro_batch_size=32', 'train.global_batch_size=512', 'train.dist.tensor_parallel_size=2', 'train.dist.pipeline_parallel_size=2', 'train.amp.enabled=true', 'train.activation_checkpoint.enabled=true', 'train.num_accumulation_steps=8', 'train.evaluation.enabled=false', 'train.train_iter=220', 'train.train_epoch=0', 'train.log_period=1', 'train.zero_optimization.enabled=false', 'train.zero_optimization.stage=0', 'train.load_weight=test_logs/oneflow-28/NVIDIA_GeForce_RTX_3080_Ti/LibAI_bert_large_pretrain_graph_nl24_nah16_hs1024_FP16_actrue_DP2_MP2_PP2_zerofalse_stage0_mbs32_gbs512_acc8_1n8g/model_final/', 'train.output_dir=test_logs/oneflow-28/NVIDIA_GeForce_RTX_3080_Ti/59b64db/LibAI_bert_large_pretrain_graph_nl24_nah16_hs1024_FP16_actrue_DP2_MP2_PP2_zerofalse_stage0_mbs32_gbs512_acc8_1n8g'])
+[04/03 07:13:43 libai]: Contents of args.config_file=configs/bert_large_pretrain.py:
+[38;5;197mfrom[39m[38;5;15m [39m[38;5;15mlibai[39m[38;5;15m.[39m[38;5;15mconfig[39m[38;5;15m [39m[38;5;197mimport[39m[38;5;15m [39m[38;5;15mLazyCall[39m
+[38;5;197mfrom[39m[38;5;15m [39m[38;5;15mlibai[39m[38;5;15m.[39m[38;5;15mevaluation[39m[38;5;15m [39m[38;5;197mimport[39m[38;5;15m [39m[38;5;15mPPLEvaluator[39m
+[38;5;197mfrom[39m[38;5;15m [39m[38;5;15m.[39m[38;5;15mcommon[39m[38;5;15m.[39m[38;5;15mmodels[39m[38;5;15m.[39m[38;5;15mbert[39m[38;5;15m [39m[38;5;197mimport[39m[38;5;15m [39m[38;5;15mpretrain_model[39m[38;5;15m [39m[38;5;81mas[39m[38;5;15m [39m[38;5;15mmodel[39m
+[38;5;197mfrom[39m[38;5;15m [39m[38;5;15m.[39m[38;5;15mcommon[39m[38;5;15m.[39m[38;5;15mmodels[39m[38;5;15m.[39m[38;5;15mgraph[39m[38;5;15m [39m[38;5;197mimport[39m[38;5;15m [39m[38;5;15mgraph[39m
+[38;5;197mfrom[39m[38;5;15m [39m[38;5;15m.[39m[38;5;15mcommon[39m[38;5;15m.[39m[38;5;15mtrain[39m[38;5;15m [39m[38;5;197mimport[39m[38;5;15m [39m[38;5;15mtrain[39m
+[38;5;197mfrom[39m[38;5;15m [39m[38;5;15m.[39m[38;5;15mcommon[39m[38;5;15m.[39m[38;5;15moptim[39m[38;5;15m [39m[38;5;197mimport[39m[38;5;15m [39m[38;5;15moptim[39m
+[38;5;197mfrom[39m[38;5;15m [39m[38;5;15m.[39m[38;5;15mcommon[39m[38;5;15m.[39m[38;5;15mdata[39m[38;5;15m.[39m[38;5;15mbert_dataset[39m[38;5;15m [39m[38;5;197mimport[39m[38;5;15m [39m[38;5;15mdataloader[39m[38;5;15m,[39m[38;5;15m [39m[38;5;15mtokenization[39m
+
+[38;5;15mvocab_file[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;186m"[39m[38;5;186m./data_test/bert_data/bert-base-chinese-vocab.txt[39m[38;5;186m"[39m
+[38;5;15mdata_prefix[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;186m"[39m[38;5;186m./data_test/bert_data/loss_compara_content_sentence[39m[38;5;186m"[39m
+
+[38;5;15mtokenization[39m[38;5;197m.[39m[38;5;15mtokenizer[39m[38;5;197m.[39m[38;5;15mvocab_file[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;15mvocab_file[39m
+[38;5;15mdataloader[39m[38;5;197m.[39m[38;5;15mtrain[39m[38;5;197m.[39m[38;5;15mdataset[39m[38;5;15m[[39m[38;5;141m0[39m[38;5;15m][39m[38;5;197m.[39m[38;5;15mdata_prefix[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;15mdata_prefix[39m
+[38;5;15mdataloader[39m[38;5;197m.[39m[38;5;15mtrain[39m[38;5;197m.[39m[38;5;15mdataset[39m[38;5;15m[[39m[38;5;141m0[39m[38;5;15m][39m[38;5;197m.[39m[38;5;15mindexed_dataset[39m[38;5;197m.[39m[38;5;15mdata_prefix[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;15mdata_prefix[39m
+[38;5;15mdataloader[39m[38;5;197m.[39m[38;5;15mtest[39m[38;5;15m[[39m[38;5;141m0[39m[38;5;15m][39m[38;5;197m.[39m[38;5;15mdataset[39m[38;5;197m.[39m[38;5;15mdata_prefix[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;15mdata_prefix[39m
+[38;5;15mdataloader[39m[38;5;197m.[39m[38;5;15mtest[39m[38;5;15m[[39m[38;5;141m0[39m[38;5;15m][39m[38;5;197m.[39m[38;5;15mdataset[39m[38;5;197m.[39m[38;5;15mindexed_dataset[39m[38;5;197m.[39m[38;5;15mdata_prefix[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;15mdata_prefix[39m
+
+[38;5;15mgraph[39m[38;5;197m.[39m[38;5;15mdebug[39m[38;5;197m=[39m[38;5;141m0[39m
+
+[38;5;242m# Bert-large model config[39m
+[38;5;15mmodel[39m[38;5;197m.[39m[38;5;15mcfg[39m[38;5;197m.[39m[38;5;15mnum_attention_heads[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;141m16[39m
+[38;5;15mmodel[39m[38;5;197m.[39m[38;5;15mcfg[39m[38;5;197m.[39m[38;5;15mhidden_size[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;141m768[39m
+[38;5;15mmodel[39m[38;5;197m.[39m[38;5;15mcfg[39m[38;5;197m.[39m[38;5;15mhidden_layers[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;141m8[39m
+
+[38;5;15mtrain[39m[38;5;197m.[39m[38;5;15minput_placement_device[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;186m"[39m[38;5;186mcpu[39m[38;5;186m"[39m
+
+[38;5;15mtrain[39m[38;5;197m.[39m[38;5;15mdist[39m[38;5;197m.[39m[38;5;15mpipeline_num_layers[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;15mmodel[39m[38;5;197m.[39m[38;5;15mcfg[39m[38;5;197m.[39m[38;5;15mhidden_layers[39m
+
+[38;5;15mtrain[39m[38;5;197m.[39m[38;5;15mtrain_micro_batch_size[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;141m16[39m
+
+[38;5;15mtrain[39m[38;5;197m.[39m[38;5;15mamp[39m[38;5;197m.[39m[38;5;15menabled[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;81mTrue[39m
+
+[38;5;81mfor[39m[38;5;15m [39m[38;5;15mds[39m[38;5;15m [39m[38;5;197min[39m[38;5;15m [39m[38;5;15mdataloader[39m[38;5;197m.[39m[38;5;15mtrain[39m[38;5;197m.[39m[38;5;15mdataset[39m[38;5;15m:[39m
+[38;5;15m    [39m[38;5;15mds[39m[38;5;197m.[39m[38;5;15mmax_seq_length[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;15mmodel[39m[38;5;197m.[39m[38;5;15mcfg[39m[38;5;197m.[39m[38;5;15mmax_position_embeddings[39m
+
+[38;5;15mtrain[39m[38;5;197m.[39m[38;5;15mevaluation[39m[38;5;197m.[39m[38;5;15mevaluator[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;15mLazyCall[39m[38;5;15m([39m[38;5;15mPPLEvaluator[39m[38;5;15m)[39m[38;5;15m([39m[38;5;15m)[39m
+
+[38;5;15mtrain[39m[38;5;197m.[39m[38;5;15moutput_dir[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;186m"[39m[38;5;186moutput/bert_output[39m[38;5;186m"[39m
+
+[04/03 07:13:43 libai]: Full config saved to test_logs/oneflow-28/NVIDIA_GeForce_RTX_3080_Ti/59b64db/LibAI_bert_large_pretrain_graph_nl24_nah16_hs1024_FP16_actrue_DP2_MP2_PP2_zerofalse_stage0_mbs32_gbs512_acc8_1n8g/config.yaml
+[04/03 07:13:43 lb.engine.default]: > compiling dataset index builder ...
+make: Entering directory '/data/home/sunjinfeng/bert_test/libai/libai/data/data_utils'
+make: Nothing to be done for 'default'.
+make: Leaving directory '/data/home/sunjinfeng/bert_test/libai/libai/data/data_utils'
+[04/03 07:13:43 lb.engine.default]: >>> done with dataset index builder. Compilation time: 0.040 seconds
+[04/03 07:13:43 lb.engine.default]: >>> done with compiling. Compilation time: 0.041 seconds
+[04/03 07:13:43 lb.engine.default]: Prepare training, validating, testing set
+[04/03 07:13:43 lb.data.data_utils.indexed_dataset]: building dataset index ...
+[04/03 07:13:43 lb.data.data_utils.indexed_dataset]: warming up index mmap file...
+[04/03 07:13:43 lb.data.data_utils.indexed_dataset]: reading sizes...
+[04/03 07:13:43 lb.data.data_utils.indexed_dataset]: reading pointers...
+[04/03 07:13:43 lb.data.data_utils.indexed_dataset]: reading document index...
+[04/03 07:13:43 lb.data.data_utils.indexed_dataset]: warming up data mmap file...
+[04/03 07:13:43 lb.data.data_utils.indexed_dataset]: creating numpy buffer of mmap...
+[04/03 07:13:43 lb.data.data_utils.indexed_dataset]: creating memory view of numpy buffer...
+[04/03 07:13:43 lb.data.data_utils.indexed_dataset]: Finished creating indexed dataset in 0.117023 seconds
+[04/03 07:13:43 lb.data.data_utils.indexed_dataset]: indexed dataset stats:
+[04/03 07:13:43 lb.data.data_utils.indexed_dataset]: number of documents: 50000
+[04/03 07:13:43 lb.data.data_utils.indexed_dataset]: number of sentences: 1249934
+[04/03 07:13:43 lb.data.data_utils.dataset_utils]:  > loading indexed mapping from ./data_test/bert_data/loss_compara_content_sentence_bert_indexmap_112640mns_509msl_0.10ssp_1234s.npy
+[04/03 07:13:43 lb.data.data_utils.dataset_utils]:     loaded indexed file in 0.003 seconds
+[04/03 07:13:43 lb.data.data_utils.dataset_utils]:     total number of samples: 113036
+[04/03 07:13:43 lb.data.data_utils.dataset_utils]:  > loading indexed mapping from ./data_test/bert_data/loss_compara_content_sentence_bert_indexmap_64mns_509msl_0.10ssp_1234s.npy
+[04/03 07:13:43 lb.data.data_utils.dataset_utils]:     loaded indexed file in 0.001 seconds
+[04/03 07:13:43 lb.data.data_utils.dataset_utils]:     total number of samples: 5884
+[04/03 07:13:43 lb.data.data_utils.dataset_utils]:  > loading indexed mapping from ./data_test/bert_data/loss_compara_content_sentence_bert_indexmap_64mns_509msl_0.10ssp_1234s.npy
+[04/03 07:13:43 lb.data.data_utils.dataset_utils]:     loaded indexed file in 0.001 seconds
+[04/03 07:13:43 lb.data.data_utils.dataset_utils]:     total number of samples: 5884
+[04/03 07:13:43 lb.engine.default]: Prepare testing set
+[04/03 07:13:43 lb.data.data_utils.indexed_dataset]: building dataset index ...
+[04/03 07:13:43 lb.data.data_utils.indexed_dataset]: warming up index mmap file...
+[04/03 07:13:43 lb.data.data_utils.indexed_dataset]: reading sizes...
+[04/03 07:13:43 lb.data.data_utils.indexed_dataset]: reading pointers...
+[04/03 07:13:43 lb.data.data_utils.indexed_dataset]: reading document index...
+[04/03 07:13:43 lb.data.data_utils.indexed_dataset]: warming up data mmap file...
+[04/03 07:13:43 lb.data.data_utils.indexed_dataset]: creating numpy buffer of mmap...
+[04/03 07:13:43 lb.data.data_utils.indexed_dataset]: creating memory view of numpy buffer...
+[04/03 07:13:43 lb.data.data_utils.indexed_dataset]: Finished creating indexed dataset in 0.243603 seconds
+[04/03 07:13:43 lb.data.data_utils.indexed_dataset]: indexed dataset stats:
+[04/03 07:13:43 lb.data.data_utils.indexed_dataset]: number of documents: 50000
+[04/03 07:13:43 lb.data.data_utils.indexed_dataset]: number of sentences: 1249934
+[04/03 07:13:43 lb.data.data_utils.dataset_utils]:  > loading indexed mapping from ./data_test/bert_data/loss_compara_content_sentence_bert_indexmap_10mns_509msl_0.10ssp_1234s.npy
+[04/03 07:13:43 lb.data.data_utils.dataset_utils]:     loaded indexed file in 0.003 seconds
+[04/03 07:13:43 lb.data.data_utils.dataset_utils]:     total number of samples: 119037
+[04/03 07:13:53 lb.engine.default]: Auto-scaling the config to train.train_iter=220, train.warmup_iter=0
+[04/03 07:13:53 libai]: > Start building model...
+[04/03 07:13:57 lb.engine.default]: Model:
+BertForPreTraining(
+  (bert): BertModel(
+    (embeddings): BertEmbeddings(
+      (vocab_embeddings): VocabEmbedding(num_embeddings=21248, embedding_dim=1024)
+      (position_embeddings): Embedding(num_embeddings=512, embedding_dim=1024)
+      (tokentype_embeddings): Embedding(num_embeddings=2, embedding_dim=1024)
+      (embedding_dropout): Dropout(p=0.0, inplace=False)
+    )
+    (extended_attn_mask): BertExtendedAttnMask()
+    (encoders): ModuleList(
+      (0): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (1): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (2): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (3): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (4): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (5): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (6): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (7): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (8): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (9): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (10): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (11): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (12): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (13): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (14): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (15): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (16): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (17): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (18): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (19): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (20): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (21): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (22): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (23): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+    )
+    (final_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+    (pooler): BertPooler(
+      (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=col)
+      (activation_func): Tanh()
+    )
+  )
+  (cls_head): BertPreTrainingHeads(
+    (predictions): BertLMPredictionHead(
+      (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=data)
+      (activation_func): GELU()
+      (layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+    )
+    (seq_relationship): Linear1D(in_features=1024, out_features=2, bias=True, parallel=data)
+    (lm_logits): LMLogits()
+    (loss_func): BertLoss(
+      (lm_loss): ParallelCrossEntropyLoss()
+    )
+  )
+)
+[04/03 07:13:57 libai]: >>> done with building model. Building time: 3.982 seconds
+WARNING [04/03 07:13:57 lb.scheduler.lr_scheduler]: warmup iters equals to zero, return CosineLR
+[04/03 07:13:57 lb.engine.default]: Graph debug mode on, automatically output debug info.
+[04/03 07:13:57 lb.engine.default]: Graph debug mode on, automatically output debug info.
+[04/03 07:13:57 lb.utils.checkpoint]: Loading checkpoint from test_logs/oneflow-28/NVIDIA_GeForce_RTX_3080_Ti/LibAI_bert_large_pretrain_graph_nl24_nah16_hs1024_FP16_actrue_DP2_MP2_PP2_zerofalse_stage0_mbs32_gbs512_acc8_1n8g/model_final/
+[04/03 07:14:02 lb.utils.checkpoint]: iter info in test_logs/oneflow-28/NVIDIA_GeForce_RTX_3080_Ti/LibAI_bert_large_pretrain_graph_nl24_nah16_hs1024_FP16_actrue_DP2_MP2_PP2_zerofalse_stage0_mbs32_gbs512_acc8_1n8g/model_final/ not found, set iter to 0
+[04/03 07:14:02 lb.engine.trainer]: Starting training from iteration 0
+W20230403 07:14:02.937348 783187 eager_local_op_interpreter.cpp:268] Casting a local tensor to a global tensor with Broadcast sbp will modify the data of input! If you want to keep the input local tensor unchanged, please set the arg copy to True.
+(GRAPH:GraphBase_0:GraphBase) start building graph.
+[04/03 07:14:05 lb.models.utils.graph_base]: Start compiling the train graph which may take some time. Please wait for a moment ...
+                                                                         [1/60][GraphCompile]GraphBase_0 InsertPinnedIdentityOpPass                                                                         [2/60][GraphCompile]GraphBase_0 EliminateDeadNodesPass                                                                         [3/60][GraphCompile]GraphBase_0 NormalizationExponentialAverageAut                                                                         [4/60][GraphCompile]GraphBase_0 AutoMixedPrecision                                                                         [5/60][GraphCompile]GraphBase_0 PruneDependOpPass                                                                         [6/60][GraphCompile]GraphBase_0 PruneAmpWhiteIdentityOpPass                                                                         [7/60][GraphCompile]GraphBase_0 OptimizerPlacementOptimizationPass                                                                         [8/60][GraphCompile]GraphBase_0 FuseAddToOutputPass                                                                         [9/60][GraphCompile]GraphBase_0 IRRoundTripBeforeAD                                                                         [10/60][GraphCompile]GraphBase_0 DynamicLossScaleSchedulePass                                                                         [11/60][GraphCompile]GraphBase_0 AutoTrainStep                                                                         [12/60][GraphCompile]GraphBase_0 AutoLearningRate                                                                         [13/60][GraphCompile]GraphBase_0 QuantAwareTraining                                                                         [14/60][GraphCompile]GraphBase_0 GenerateOptimizerOpConfs                                                                         [15/60][GraphCompile]GraphBase_0 PrunePinnedIdentityOpPass                                                                         [16/60][GraphCompile]GraphBase_0 ReplaceEmbeddingOps                                                                         [17/60][GraphCompile]GraphBase_0 SequentialOneEmbeddingOpsPass                                                                         [18/60][GraphCompile]GraphBase_0 FuseEmbeddingShuffleInteractionPas                                                                         [19/60][GraphCompile]GraphBase_0 FuseBCEReduceMeanFwBwPass                                                                         [20/60][GraphCompile]GraphBase_0 AddSspVariableProxy                                                                         [21/60][GraphCompile]GraphBase_0 CheckpointingPass                                                                         [22/60][GraphCompile]GraphBase_0 CudnnFusedNormalizationAddReluPass                                                                         [23/60][GraphCompile]GraphBase_0 PruneCastToStaticShapeOpsPass                                                                         [24/60][GraphCompile]GraphBase_0 IRRoundTrip                                                                         [25/60][GraphCompile]GraphBase_0 FuseAddToOutputPass                                                                         [26/60][GraphCompile]GraphBase_0 FuseConsecutiveAddPass                                                                         [27/60][GraphCompile]GraphBase_0 IndexedSlicesOptimizerRewritePass                                                                         [28/60][GraphCompile]GraphBase_0 SplitSparseSoftmaxCrossEntropyOpPa                                                                         [29/60][GraphCompile]GraphBase_0 DoParallelCastBeforeWideningTypeCa                                                                         [30/60][GraphCompile]GraphBase_0 FuseCastScalePass                                                                         [31/60][GraphCompile]GraphBase_0 PruneParallelCastOpsPass                                                                         [32/60][GraphCompile]GraphBase_0 FuseUpdateOpsPass                                                                         [33/60][GraphCompile]GraphBase_0 FuseModelUpdateCastOpsPass                                                                         [34/60][GraphCompile]GraphBase_0 MultiTensorModelUpdatePass                                                                         [35/60][GraphCompile]GraphBase_0 FixPipelineStageIdPass                                                                         [36/60][GraphCompile]GraphBase_0 PipelineBufferPass                                                                         [37/60][GraphCompile]GraphBase_0 AutoParallelPass                                                                         [38/60][GraphCompile]GraphBase_0 DelayVariableOpExecutionPass                                                                         [39/60][GraphCompile]GraphBase_0 CutlassConvTuningWarmupPass                                                                         [40/60][GraphCompile]GraphBase_0 DumpVariableInfoPass                                                                         [41/60][GraphCompile]GraphBase_0 DumpBlobParallelConfPass(GRAPH:GraphBase_0:GraphBase) building graph Done! Cost time: 20.62s.
+
+(GRAPH:GraphBase_0:GraphBase) start building plan.
+                                                                         [42/60][GraphCompile]GraphBase_0 GroupBoxingByDstParallel                                                                         [43/60][GraphCompile]GraphBase_0 BoxingWithMiddleNodes                                                                         [44/60][GraphCompile]GraphBase_0 SetCtrl                                                                         [45/60][GraphCompile]GraphBase_0 AutoPrependTick                                                                         [46/60][GraphCompile]GraphBase_0 AddTickForTimeShape                                                                         [47/60][GraphCompile]GraphBase_0 AutoSourceAndSinkTick                                                                         [48/60][GraphCompile]GraphBase_0 CriticalSectionTick                                                                         [49/60][GraphCompile]GraphBase_0 SystemOpFillJobNamePassW20230403 07:14:30.419754 783194 insert_nccl_logical_op_pass.cpp:976]  In Graph: GraphBase_0 Placement: cuda-@0:0-@1:1-@2:2-@3:3 the total_op_num = 1126 and has 2 different nccl stream which is possible to trigger cuda stream kernel launch upper limit. So the nccl logical kernel will from async to sync exec, which may affect performance.
+                                                                         [50/60][GraphCompile]GraphBase_0 DumpBlobParallelConfPassW20230403 07:14:31.158488 783187 insert_nccl_logical_op_pass.cpp:976]  In Graph: GraphBase_0 Placement: cuda-@0:0-@1:1-@2:2-@3:3 the total_op_num = 1126 and has 2 different nccl stream which is possible to trigger cuda stream kernel launch upper limit. So the nccl logical kernel will from async to sync exec, which may affect performance.
+                                                                         [51/60][GraphCompile]GraphBase_0 InsertNcclLogicalOpPassW20230403 07:14:31.518144 783190 insert_nccl_logical_op_pass.cpp:976]  In Graph: GraphBase_0 Placement: cuda-@0:0-@1:1-@2:2-@3:3 the total_op_num = 1126 and has 2 different nccl stream which is possible to trigger cuda stream kernel launch upper limit. So the nccl logical kernel will from async to sync exec, which may affect performance.
+W20230403 07:14:31.933241 783191 insert_nccl_logical_op_pass.cpp:976]  In Graph: GraphBase_0 Placement: cuda-@0:0-@1:1-@2:2-@3:3 the total_op_num = 1126 and has 2 different nccl stream which is possible to trigger cuda stream kernel launch upper limit. So the nccl logical kernel will from async to sync exec, which may affect performance.
+W20230403 07:14:31.989840 783189 insert_nccl_logical_op_pass.cpp:976]  In Graph: GraphBase_0 Placement: cuda-@0:0-@1:1-@2:2-@3:3 the total_op_num = 1126 and has 2 different nccl stream which is possible to trigger cuda stream kernel launch upper limit. So the nccl logical kernel will from async to sync exec, which may affect performance.
+W20230403 07:14:32.060724 783193 insert_nccl_logical_op_pass.cpp:976]  In Graph: GraphBase_0 Placement: cuda-@0:0-@1:1-@2:2-@3:3 the total_op_num = 1126 and has 2 different nccl stream which is possible to trigger cuda stream kernel launch upper limit. So the nccl logical kernel will from async to sync exec, which may affect performance.
+W20230403 07:14:32.083498 783192 insert_nccl_logical_op_pass.cpp:976]  In Graph: GraphBase_0 Placement: cuda-@0:0-@1:1-@2:2-@3:3 the total_op_num = 1126 and has 2 different nccl stream which is possible to trigger cuda stream kernel launch upper limit. So the nccl logical kernel will from async to sync exec, which may affect performance.
+W20230403 07:14:32.138278 783188 insert_nccl_logical_op_pass.cpp:976]  In Graph: GraphBase_0 Placement: cuda-@0:0-@1:1-@2:2-@3:3 the total_op_num = 1126 and has 2 different nccl stream which is possible to trigger cuda stream kernel launch upper limit. So the nccl logical kernel will from async to sync exec, which may affect performance.
+                                                                         [52/60][GraphCompile]GraphBase_0 DumpBlobParallelConfPass                                                                         [53/60][GraphCompile]GraphBase_0 CheckAndLogOpGraph                                                                         [54/60][GraphCompile]GraphBase_0 BuildTaskGraph                                                                         [55/60][GraphCompile]GraphBase_0 AddTaskToPlan                                                                         [56/60][GraphCompile]GraphBase_0 InferMemShare                                                                         [57/60][GraphCompile]GraphBase_0 GenMemBlockAndChunk                                                                         [58/60][GraphCompile]GraphBase_0 LogPlan                                                                         [59/60][GraphCompile]GraphBase_0 GenRegisterHint                                                                         [60/60][GraphCompile]GraphBase_0 GenCollectiveBoxingPlan                                                                         [61/60][GraphCompile]GraphBase_0 DumpCtrlRegstInfoToPlan                                                                         [62/60][GraphCompile]GraphBase_0 GenMemAndLightPlanLog                                                                         [63/60][GraphCompile]GraphBase_0 SyncPlan                                                                         [64/60][GraphCompile]GraphBase_0 InitRuntime                                                                         [65/60][GraphCompile]GraphBase_0 Done                                                                         
+(GRAPH:GraphBase_0:GraphBase) building plan Done! Cost time: 17.19s.
+
+[04/03 07:15:00 lb.utils.events]:  iteration: 0/220  consumed_samples: 512  total_loss: 10.87  lm_loss: 10.13  sop_loss: 0.7448  data_time: 0.1053 s/iter  lr: N/A  
+[04/03 07:15:09 lb.utils.events]:  eta: 0:30:21  iteration: 1/220  consumed_samples: 1024  total_loss: 10.86  lm_loss: 10.13  sop_loss: 0.7383  data_time: 0.0621 s/iter  lr: N/A  
+[04/03 07:15:17 lb.utils.events]:  eta: 0:29:29  iteration: 2/220  consumed_samples: 1536  total_loss: 10.86  lm_loss: 10.13  sop_loss: 0.7318  time: 8.1536 s/iter  data_time: 0.0491 s/iter total_throughput: 62.79 samples/s lr: N/A  
+[04/03 07:15:25 lb.utils.events]:  eta: 0:29:31  iteration: 3/220  consumed_samples: 2048  total_loss: 10.86  lm_loss: 10.13  sop_loss: 0.7383  time: 8.2024 s/iter  data_time: 0.0412 s/iter total_throughput: 62.42 samples/s lr: N/A  
+[04/03 07:15:33 lb.utils.events]:  eta: 0:29:33  iteration: 4/220  consumed_samples: 2560  total_loss: 10.87  lm_loss: 10.13  sop_loss: 0.7448  time: 8.2176 s/iter  data_time: 0.0368 s/iter total_throughput: 62.31 samples/s lr: N/A  
+[04/03 07:15:42 lb.utils.events]:  eta: 0:29:25  iteration: 5/220  consumed_samples: 3072  total_loss: 11.91  lm_loss: 9.963  sop_loss: 1.953  time: 8.2256 s/iter  data_time: 0.0340 s/iter total_throughput: 62.24 samples/s lr: N/A  
+[04/03 07:15:50 lb.utils.events]:  eta: 0:29:16  iteration: 6/220  consumed_samples: 3584  total_loss: 12.92  lm_loss: 9.8  sop_loss: 3.16  time: 8.2222 s/iter  data_time: 0.0321 s/iter total_throughput: 62.27 samples/s lr: N/A  
+[04/03 07:15:58 lb.utils.events]:  eta: 0:29:08  iteration: 7/220  consumed_samples: 4096  total_loss: 11.9  lm_loss: 9.793  sop_loss: 2.014  time: 8.2523 s/iter  data_time: 0.0302 s/iter total_throughput: 62.04 samples/s lr: N/A  
+[04/03 07:16:06 lb.utils.events]:  eta: 0:29:00  iteration: 8/220  consumed_samples: 4608  total_loss: 10.87  lm_loss: 9.786  sop_loss: 1.091  time: 8.2455 s/iter  data_time: 0.0287 s/iter total_throughput: 62.09 samples/s lr: N/A  
+[04/03 07:16:15 lb.utils.events]:  eta: 0:28:52  iteration: 9/220  consumed_samples: 5120  total_loss: 10.86  lm_loss: 9.782  sop_loss: 1.052  time: 8.2499 s/iter  data_time: 0.0277 s/iter total_throughput: 62.06 samples/s lr: N/A  
+[04/03 07:16:23 lb.utils.events]:  eta: 0:28:44  iteration: 10/220  consumed_samples: 5632  total_loss: 10.86  lm_loss: 9.778  sop_loss: 1.014  time: 8.2648 s/iter  data_time: 0.0266 s/iter total_throughput: 61.95 samples/s lr: N/A  
+[04/03 07:16:31 lb.utils.events]:  eta: 0:28:35  iteration: 11/220  consumed_samples: 6144  total_loss: 10.85  lm_loss: 9.69  sop_loss: 0.9403  time: 8.2609 s/iter  data_time: 0.0262 s/iter total_throughput: 61.98 samples/s lr: N/A  
+[04/03 07:16:40 lb.utils.events]:  eta: 0:28:27  iteration: 12/220  consumed_samples: 6656  total_loss: 10.85  lm_loss: 9.602  sop_loss: 0.8668  time: 8.2512 s/iter  data_time: 0.0256 s/iter total_throughput: 62.05 samples/s lr: N/A  
+[04/03 07:16:48 lb.utils.events]:  eta: 0:28:19  iteration: 13/220  consumed_samples: 7168  total_loss: 10.54  lm_loss: 9.453  sop_loss: 0.8394  time: 8.2520 s/iter  data_time: 0.0250 s/iter total_throughput: 62.05 samples/s lr: N/A  
+[04/03 07:16:56 lb.utils.events]:  eta: 0:28:11  iteration: 14/220  consumed_samples: 7680  total_loss: 10.24  lm_loss: 9.304  sop_loss: 0.8119  time: 8.2556 s/iter  data_time: 0.0245 s/iter total_throughput: 62.02 samples/s lr: N/A  
+[04/03 07:17:04 lb.utils.events]:  eta: 0:28:02  iteration: 15/220  consumed_samples: 8192  total_loss: 10.2  lm_loss: 9.225  sop_loss: 0.7879  time: 8.2488 s/iter  data_time: 0.0241 s/iter total_throughput: 62.07 samples/s lr: N/A  
+[04/03 07:17:12 lb.utils.events]:  eta: 0:27:54  iteration: 16/220  consumed_samples: 8704  total_loss: 10.17  lm_loss: 9.147  sop_loss: 0.7638  time: 8.2385 s/iter  data_time: 0.0236 s/iter total_throughput: 62.15 samples/s lr: N/A  
+[04/03 07:17:20 lb.utils.events]:  eta: 0:27:43  iteration: 17/220  consumed_samples: 9216  total_loss: 10.1  lm_loss: 9.084  sop_loss: 0.7637  time: 8.2292 s/iter  data_time: 0.0232 s/iter total_throughput: 62.22 samples/s lr: N/A  
+[04/03 07:17:29 lb.utils.events]:  eta: 0:27:37  iteration: 18/220  consumed_samples: 9728  total_loss: 10.04  lm_loss: 9.022  sop_loss: 0.7636  time: 8.2329 s/iter  data_time: 0.0228 s/iter total_throughput: 62.19 samples/s lr: N/A  
+[04/03 07:17:37 lb.utils.events]:  eta: 0:27:27  iteration: 19/220  consumed_samples: 10240  total_loss: 9.861  lm_loss: 8.972  sop_loss: 0.7542  time: 8.2300 s/iter  data_time: 0.0225 s/iter total_throughput: 62.21 samples/s lr: N/A  
+[04/03 07:17:45 lb.utils.events]:  eta: 0:27:21  iteration: 20/220  consumed_samples: 10752  total_loss: 9.686  lm_loss: 8.922  sop_loss: 0.7448  time: 8.2372 s/iter  data_time: 0.0182 s/iter total_throughput: 62.16 samples/s lr: N/A  
+[04/03 07:17:53 lb.utils.events]:  eta: 0:27:10  iteration: 21/220  consumed_samples: 11264  total_loss: 9.615  lm_loss: 8.863  sop_loss: 0.7431  time: 8.2303 s/iter  data_time: 0.0180 s/iter total_throughput: 62.21 samples/s lr: N/A  
+[04/03 07:18:02 lb.utils.events]:  eta: 0:27:00  iteration: 22/220  consumed_samples: 11776  total_loss: 9.543  lm_loss: 8.803  sop_loss: 0.7414  time: 8.2292 s/iter  data_time: 0.0178 s/iter total_throughput: 62.22 samples/s lr: N/A  
+[04/03 07:18:10 lb.utils.events]:  eta: 0:26:54  iteration: 23/220  consumed_samples: 12288  total_loss: 9.533  lm_loss: 8.757  sop_loss: 0.741  time: 8.2323 s/iter  data_time: 0.0178 s/iter total_throughput: 62.19 samples/s lr: N/A  
+[04/03 07:18:18 lb.utils.events]:  eta: 0:26:48  iteration: 24/220  consumed_samples: 12800  total_loss: 9.523  lm_loss: 8.711  sop_loss: 0.7406  time: 8.2344 s/iter  data_time: 0.0179 s/iter total_throughput: 62.18 samples/s lr: N/A  
+[04/03 07:18:27 lb.utils.events]:  eta: 0:26:40  iteration: 25/220  consumed_samples: 13312  total_loss: 9.436  lm_loss: 8.649  sop_loss: 0.7362  time: 8.2403 s/iter  data_time: 0.0178 s/iter total_throughput: 62.13 samples/s lr: N/A  
+[04/03 07:18:35 lb.utils.events]:  eta: 0:26:32  iteration: 26/220  consumed_samples: 13824  total_loss: 9.349  lm_loss: 8.586  sop_loss: 0.7318  time: 8.2408 s/iter  data_time: 0.0177 s/iter total_throughput: 62.13 samples/s lr: N/A  
+[04/03 07:18:43 lb.utils.events]:  eta: 0:26:24  iteration: 27/220  consumed_samples: 14336  total_loss: 9.272  lm_loss: 8.542  sop_loss: 0.7296  time: 8.2412 s/iter  data_time: 0.0179 s/iter total_throughput: 62.13 samples/s lr: N/A  
+[04/03 07:18:51 lb.utils.events]:  eta: 0:26:15  iteration: 28/220  consumed_samples: 14848  total_loss: 9.196  lm_loss: 8.497  sop_loss: 0.7274  time: 8.2456 s/iter  data_time: 0.0177 s/iter total_throughput: 62.09 samples/s lr: N/A  
+[04/03 07:19:00 lb.utils.events]:  eta: 0:26:07  iteration: 29/220  consumed_samples: 15360  total_loss: 9.143  lm_loss: 8.436  sop_loss: 0.7254  time: 8.2501 s/iter  data_time: 0.0174 s/iter total_throughput: 62.06 samples/s lr: N/A  
+[04/03 07:19:08 lb.utils.events]:  eta: 0:25:59  iteration: 30/220  consumed_samples: 15872  total_loss: 9.09  lm_loss: 8.374  sop_loss: 0.7233  time: 8.2433 s/iter  data_time: 0.0174 s/iter total_throughput: 62.11 samples/s lr: N/A  
+[04/03 07:19:16 lb.utils.events]:  eta: 0:25:51  iteration: 31/220  consumed_samples: 16384  total_loss: 9.049  lm_loss: 8.327  sop_loss: 0.7228  time: 8.2478 s/iter  data_time: 0.0171 s/iter total_throughput: 62.08 samples/s lr: N/A  
+[04/03 07:19:25 lb.utils.events]:  eta: 0:25:42  iteration: 32/220  consumed_samples: 16896  total_loss: 9.008  lm_loss: 8.28  sop_loss: 0.7223  time: 8.2474 s/iter  data_time: 0.0170 s/iter total_throughput: 62.08 samples/s lr: N/A  
+[04/03 07:19:33 lb.utils.events]:  eta: 0:25:34  iteration: 33/220  consumed_samples: 17408  total_loss: 8.975  lm_loss: 8.241  sop_loss: 0.7211  time: 8.2467 s/iter  data_time: 0.0170 s/iter total_throughput: 62.09 samples/s lr: N/A  
+[04/03 07:19:41 lb.utils.events]:  eta: 0:25:26  iteration: 34/220  consumed_samples: 17920  total_loss: 8.943  lm_loss: 8.202  sop_loss: 0.72  time: 8.2437 s/iter  data_time: 0.0169 s/iter total_throughput: 62.11 samples/s lr: N/A  
+[04/03 07:19:49 lb.utils.events]:  eta: 0:25:17  iteration: 35/220  consumed_samples: 18432  total_loss: 8.87  lm_loss: 8.147  sop_loss: 0.7178  time: 8.2433 s/iter  data_time: 0.0168 s/iter total_throughput: 62.11 samples/s lr: N/A  
+[04/03 07:19:57 lb.utils.events]:  eta: 0:25:09  iteration: 36/220  consumed_samples: 18944  total_loss: 8.798  lm_loss: 8.092  sop_loss: 0.7156  time: 8.2421 s/iter  data_time: 0.0169 s/iter total_throughput: 62.12 samples/s lr: N/A  
+[04/03 07:20:06 lb.utils.events]:  eta: 0:24:59  iteration: 37/220  consumed_samples: 19456  total_loss: 8.754  lm_loss: 8.051  sop_loss: 0.7124  time: 8.2405 s/iter  data_time: 0.0168 s/iter total_throughput: 62.13 samples/s lr: N/A  
+[04/03 07:20:14 lb.utils.events]:  eta: 0:24:52  iteration: 38/220  consumed_samples: 19968  total_loss: 8.71  lm_loss: 8.01  sop_loss: 0.7093  time: 8.2425 s/iter  data_time: 0.0169 s/iter total_throughput: 62.12 samples/s lr: N/A  
+[04/03 07:20:22 lb.utils.events]:  eta: 0:24:44  iteration: 39/220  consumed_samples: 20480  total_loss: 8.688  lm_loss: 7.976  sop_loss: 0.7074  time: 8.2435 s/iter  data_time: 0.0169 s/iter total_throughput: 62.11 samples/s lr: N/A  
+[04/03 07:20:30 lb.utils.events]:  eta: 0:24:36  iteration: 40/220  consumed_samples: 20992  total_loss: 8.666  lm_loss: 7.943  sop_loss: 0.7054  time: 8.2370 s/iter  data_time: 0.0170 s/iter total_throughput: 62.16 samples/s lr: N/A  
+[04/03 07:20:38 lb.utils.events]:  eta: 0:24:26  iteration: 41/220  consumed_samples: 21504  total_loss: 8.632  lm_loss: 7.91  sop_loss: 0.7074  time: 8.2355 s/iter  data_time: 0.0172 s/iter total_throughput: 62.17 samples/s lr: N/A  
+[04/03 07:20:47 lb.utils.events]:  eta: 0:24:17  iteration: 42/220  consumed_samples: 22016  total_loss: 8.597  lm_loss: 7.877  sop_loss: 0.708  time: 8.2329 s/iter  data_time: 0.0170 s/iter total_throughput: 62.19 samples/s lr: N/A  
+[04/03 07:20:55 lb.utils.events]:  eta: 0:24:08  iteration: 43/220  consumed_samples: 22528  total_loss: 8.554  lm_loss: 7.845  sop_loss: 0.7067  time: 8.2316 s/iter  data_time: 0.0170 s/iter total_throughput: 62.20 samples/s lr: N/A  
+[04/03 07:21:03 lb.utils.events]:  eta: 0:24:00  iteration: 44/220  consumed_samples: 23040  total_loss: 8.51  lm_loss: 7.813  sop_loss: 0.7054  time: 8.2306 s/iter  data_time: 0.0167 s/iter total_throughput: 62.21 samples/s lr: N/A  
+[04/03 07:21:11 lb.utils.events]:  eta: 0:23:52  iteration: 45/220  consumed_samples: 23552  total_loss: 8.477  lm_loss: 7.779  sop_loss: 0.7052  time: 8.2306 s/iter  data_time: 0.0165 s/iter total_throughput: 62.21 samples/s lr: N/A  
+[04/03 07:21:20 lb.utils.events]:  eta: 0:23:44  iteration: 46/220  consumed_samples: 24064  total_loss: 8.444  lm_loss: 7.745  sop_loss: 0.7054  time: 8.2314 s/iter  data_time: 0.0164 s/iter total_throughput: 62.20 samples/s lr: N/A  
+[04/03 07:21:28 lb.utils.events]:  eta: 0:23:36  iteration: 47/220  consumed_samples: 24576  total_loss: 8.41  lm_loss: 7.708  sop_loss: 0.7052  time: 8.2316 s/iter  data_time: 0.0161 s/iter total_throughput: 62.20 samples/s lr: N/A  
+[04/03 07:21:36 lb.utils.events]:  eta: 0:23:27  iteration: 48/220  consumed_samples: 25088  total_loss: 8.376  lm_loss: 7.671  sop_loss: 0.7049  time: 8.2291 s/iter  data_time: 0.0162 s/iter total_throughput: 62.22 samples/s lr: N/A  
+[04/03 07:21:44 lb.utils.events]:  eta: 0:23:19  iteration: 49/220  consumed_samples: 25600  total_loss: 8.359  lm_loss: 7.652  sop_loss: 0.7047  time: 8.2295 s/iter  data_time: 0.0163 s/iter total_throughput: 62.22 samples/s lr: N/A  
+[04/03 07:21:52 lb.utils.events]:  eta: 0:23:11  iteration: 50/220  consumed_samples: 26112  total_loss: 8.343  lm_loss: 7.633  sop_loss: 0.7049  time: 8.2282 s/iter  data_time: 0.0164 s/iter total_throughput: 62.22 samples/s lr: N/A  
+[04/03 07:22:01 lb.utils.events]:  eta: 0:23:02  iteration: 51/220  consumed_samples: 26624  total_loss: 8.307  lm_loss: 7.607  sop_loss: 0.7047  time: 8.2279 s/iter  data_time: 0.0164 s/iter total_throughput: 62.23 samples/s lr: N/A  
+[04/03 07:22:09 lb.utils.events]:  eta: 0:22:54  iteration: 52/220  consumed_samples: 27136  total_loss: 8.272  lm_loss: 7.58  sop_loss: 0.7044  time: 8.2286 s/iter  data_time: 0.0166 s/iter total_throughput: 62.22 samples/s lr: N/A  
+[04/03 07:22:17 lb.utils.events]:  eta: 0:22:46  iteration: 53/220  consumed_samples: 27648  total_loss: 8.238  lm_loss: 7.545  sop_loss: 0.7047  time: 8.2297 s/iter  data_time: 0.0166 s/iter total_throughput: 62.21 samples/s lr: N/A  
+[04/03 07:22:25 lb.utils.events]:  eta: 0:22:38  iteration: 54/220  consumed_samples: 28160  total_loss: 8.204  lm_loss: 7.51  sop_loss: 0.7044  time: 8.2312 s/iter  data_time: 0.0166 s/iter total_throughput: 62.20 samples/s lr: N/A  
+[04/03 07:22:34 lb.utils.events]:  eta: 0:22:30  iteration: 55/220  consumed_samples: 28672  total_loss: 8.194  lm_loss: 7.5  sop_loss: 0.7039  time: 8.2300 s/iter  data_time: 0.0166 s/iter total_throughput: 62.21 samples/s lr: N/A  
+[04/03 07:22:42 lb.utils.events]:  eta: 0:22:22  iteration: 56/220  consumed_samples: 29184  total_loss: 8.184  lm_loss: 7.491  sop_loss: 0.7035  time: 8.2305 s/iter  data_time: 0.0166 s/iter total_throughput: 62.21 samples/s lr: N/A  
+[04/03 07:22:50 lb.utils.events]:  eta: 0:22:13  iteration: 57/220  consumed_samples: 29696  total_loss: 8.157  lm_loss: 7.463  sop_loss: 0.7031  time: 8.2288 s/iter  data_time: 0.0167 s/iter total_throughput: 62.22 samples/s lr: N/A  
+[04/03 07:22:58 lb.utils.events]:  eta: 0:22:05  iteration: 58/220  consumed_samples: 30208  total_loss: 8.13  lm_loss: 7.436  sop_loss: 0.7035  time: 8.2274 s/iter  data_time: 0.0166 s/iter total_throughput: 62.23 samples/s lr: N/A  
+[04/03 07:23:07 lb.utils.events]:  eta: 0:21:57  iteration: 59/220  consumed_samples: 30720  total_loss: 8.106  lm_loss: 7.41  sop_loss: 0.7039  time: 8.2281 s/iter  data_time: 0.0165 s/iter total_throughput: 62.23 samples/s lr: N/A  
+[04/03 07:23:15 lb.utils.events]:  eta: 0:21:49  iteration: 60/220  consumed_samples: 31232  total_loss: 8.083  lm_loss: 7.384  sop_loss: 0.7035  time: 8.2284 s/iter  data_time: 0.0161 s/iter total_throughput: 62.22 samples/s lr: N/A  
+[04/03 07:23:23 lb.utils.events]:  eta: 0:21:41  iteration: 61/220  consumed_samples: 31744  total_loss: 8.078  lm_loss: 7.382  sop_loss: 0.7031  time: 8.2293 s/iter  data_time: 0.0159 s/iter total_throughput: 62.22 samples/s lr: N/A  
+[04/03 07:23:32 lb.utils.events]:  eta: 0:21:33  iteration: 62/220  consumed_samples: 32256  total_loss: 8.074  lm_loss: 7.381  sop_loss: 0.7028  time: 8.2309 s/iter  data_time: 0.0161 s/iter total_throughput: 62.20 samples/s lr: N/A  
+[04/03 07:23:40 lb.utils.events]:  eta: 0:21:25  iteration: 63/220  consumed_samples: 32768  total_loss: 8.067  lm_loss: 7.374  sop_loss: 0.7031  time: 8.2324 s/iter  data_time: 0.0162 s/iter total_throughput: 62.19 samples/s lr: N/A  
+[04/03 07:23:48 lb.utils.events]:  eta: 0:21:17  iteration: 64/220  consumed_samples: 33280  total_loss: 8.06  lm_loss: 7.367  sop_loss: 0.7034  time: 8.2303 s/iter  data_time: 0.0162 s/iter total_throughput: 62.21 samples/s lr: N/A  
+[04/03 07:23:56 lb.utils.events]:  eta: 0:21:09  iteration: 65/220  consumed_samples: 33792  total_loss: 8.043  lm_loss: 7.348  sop_loss: 0.7031  time: 8.2311 s/iter  data_time: 0.0163 s/iter total_throughput: 62.20 samples/s lr: N/A  
+[04/03 07:24:04 lb.utils.events]:  eta: 0:21:00  iteration: 66/220  consumed_samples: 34304  total_loss: 8.025  lm_loss: 7.328  sop_loss: 0.7028  time: 8.2289 s/iter  data_time: 0.0164 s/iter total_throughput: 62.22 samples/s lr: N/A  
+[04/03 07:24:13 lb.utils.events]:  eta: 0:20:52  iteration: 67/220  consumed_samples: 34816  total_loss: 8.005  lm_loss: 7.312  sop_loss: 0.7031  time: 8.2290 s/iter  data_time: 0.0167 s/iter total_throughput: 62.22 samples/s lr: N/A  
+[04/03 07:24:21 lb.utils.events]:  eta: 0:20:44  iteration: 68/220  consumed_samples: 35328  total_loss: 7.985  lm_loss: 7.296  sop_loss: 0.7034  time: 8.2294 s/iter  data_time: 0.0167 s/iter total_throughput: 62.22 samples/s lr: N/A  
+[04/03 07:24:29 lb.utils.events]:  eta: 0:20:36  iteration: 69/220  consumed_samples: 35840  total_loss: 7.976  lm_loss: 7.282  sop_loss: 0.7031  time: 8.2316 s/iter  data_time: 0.0169 s/iter total_throughput: 62.20 samples/s lr: N/A  
+[04/03 07:24:37 lb.utils.events]:  eta: 0:20:27  iteration: 70/220  consumed_samples: 36352  total_loss: 7.967  lm_loss: 7.269  sop_loss: 0.7028  time: 8.2309 s/iter  data_time: 0.0169 s/iter total_throughput: 62.20 samples/s lr: N/A  
+[04/03 07:24:46 lb.utils.events]:  eta: 0:20:19  iteration: 71/220  consumed_samples: 36864  total_loss: 7.966  lm_loss: 7.264  sop_loss: 0.7025  time: 8.2282 s/iter  data_time: 0.0168 s/iter total_throughput: 62.22 samples/s lr: N/A  
+[04/03 07:24:54 lb.utils.events]:  eta: 0:20:11  iteration: 72/220  consumed_samples: 37376  total_loss: 7.964  lm_loss: 7.259  sop_loss: 0.7021  time: 8.2296 s/iter  data_time: 0.0166 s/iter total_throughput: 62.21 samples/s lr: N/A  
+[04/03 07:25:02 lb.utils.events]:  eta: 0:20:02  iteration: 73/220  consumed_samples: 37888  total_loss: 7.964  lm_loss: 7.255  sop_loss: 0.702  time: 8.2295 s/iter  data_time: 0.0166 s/iter total_throughput: 62.22 samples/s lr: N/A  
+[04/03 07:25:10 lb.utils.events]:  eta: 0:19:54  iteration: 74/220  consumed_samples: 38400  total_loss: 7.964  lm_loss: 7.252  sop_loss: 0.7018  time: 8.2305 s/iter  data_time: 0.0168 s/iter total_throughput: 62.21 samples/s lr: N/A  
+[04/03 07:25:19 lb.utils.events]:  eta: 0:19:46  iteration: 75/220  consumed_samples: 38912  total_loss: 7.96  lm_loss: 7.252  sop_loss: 0.7014  time: 8.2300 s/iter  data_time: 0.0168 s/iter total_throughput: 62.21 samples/s lr: N/A  
+[04/03 07:25:27 lb.utils.events]:  eta: 0:19:37  iteration: 76/220  consumed_samples: 39424  total_loss: 7.957  lm_loss: 7.251  sop_loss: 0.7011  time: 8.2296 s/iter  data_time: 0.0169 s/iter total_throughput: 62.21 samples/s lr: N/A  
+[04/03 07:25:35 lb.utils.events]:  eta: 0:19:29  iteration: 77/220  consumed_samples: 39936  total_loss: 7.96  lm_loss: 7.252  sop_loss: 0.7014  time: 8.2294 s/iter  data_time: 0.0169 s/iter total_throughput: 62.22 samples/s lr: N/A  
+[04/03 07:25:43 lb.utils.events]:  eta: 0:19:21  iteration: 78/220  consumed_samples: 40448  total_loss: 7.957  lm_loss: 7.251  sop_loss: 0.7018  time: 8.2304 s/iter  data_time: 0.0169 s/iter total_throughput: 62.21 samples/s lr: N/A  
+[04/03 07:25:52 lb.utils.events]:  eta: 0:19:13  iteration: 79/220  consumed_samples: 40960  total_loss: 7.96  lm_loss: 7.251  sop_loss: 0.702  time: 8.2321 s/iter  data_time: 0.0171 s/iter total_throughput: 62.20 samples/s lr: N/A  
+[04/03 07:26:00 lb.utils.events]:  eta: 0:19:04  iteration: 80/220  consumed_samples: 41472  total_loss: 7.957  lm_loss: 7.25  sop_loss: 0.7018  time: 8.2320 s/iter  data_time: 0.0173 s/iter total_throughput: 62.20 samples/s lr: N/A  
+[04/03 07:26:08 lb.utils.events]:  eta: 0:18:56  iteration: 81/220  consumed_samples: 41984  total_loss: 7.953  lm_loss: 7.25  sop_loss: 0.7014  time: 8.2334 s/iter  data_time: 0.0175 s/iter total_throughput: 62.19 samples/s lr: N/A  
+[04/03 07:26:17 lb.utils.events]:  eta: 0:18:48  iteration: 82/220  consumed_samples: 42496  total_loss: 7.949  lm_loss: 7.25  sop_loss: 0.7011  time: 8.2330 s/iter  data_time: 0.0175 s/iter total_throughput: 62.19 samples/s lr: N/A  
+[04/03 07:26:25 lb.utils.events]:  eta: 0:18:40  iteration: 83/220  consumed_samples: 43008  total_loss: 7.948  lm_loss: 7.247  sop_loss: 0.7014  time: 8.2336 s/iter  data_time: 0.0178 s/iter total_throughput: 62.18 samples/s lr: N/A  
+[04/03 07:26:33 lb.utils.events]:  eta: 0:18:31  iteration: 84/220  consumed_samples: 43520  total_loss: 7.949  lm_loss: 7.25  sop_loss: 0.7018  time: 8.2305 s/iter  data_time: 0.0178 s/iter total_throughput: 62.21 samples/s lr: N/A  
+[04/03 07:26:41 lb.utils.events]:  eta: 0:18:23  iteration: 85/220  consumed_samples: 44032  total_loss: 7.948  lm_loss: 7.247  sop_loss: 0.702  time: 8.2308 s/iter  data_time: 0.0177 s/iter total_throughput: 62.21 samples/s lr: N/A  
+[04/03 07:26:49 lb.utils.events]:  eta: 0:18:15  iteration: 86/220  consumed_samples: 44544  total_loss: 7.947  lm_loss: 7.244  sop_loss: 0.7018  time: 8.2308 s/iter  data_time: 0.0177 s/iter total_throughput: 62.21 samples/s lr: N/A  
+[04/03 07:26:58 lb.utils.events]:  eta: 0:18:07  iteration: 87/220  consumed_samples: 45056  total_loss: 7.946  lm_loss: 7.244  sop_loss: 0.702  time: 8.2296 s/iter  data_time: 0.0177 s/iter total_throughput: 62.21 samples/s lr: N/A  
+[04/03 07:27:06 lb.utils.events]:  eta: 0:17:58  iteration: 88/220  consumed_samples: 45568  total_loss: 7.945  lm_loss: 7.243  sop_loss: 0.7018  time: 8.2279 s/iter  data_time: 0.0178 s/iter total_throughput: 62.23 samples/s lr: N/A  
+[04/03 07:27:14 lb.utils.events]:  eta: 0:17:50  iteration: 89/220  consumed_samples: 46080  total_loss: 7.944  lm_loss: 7.244  sop_loss: 0.7014  time: 8.2266 s/iter  data_time: 0.0179 s/iter total_throughput: 62.24 samples/s lr: N/A  
+[04/03 07:27:22 lb.utils.events]:  eta: 0:17:42  iteration: 90/220  consumed_samples: 46592  total_loss: 7.944  lm_loss: 7.243  sop_loss: 0.7011  time: 8.2268 s/iter  data_time: 0.0178 s/iter total_throughput: 62.24 samples/s lr: N/A  
+[04/03 07:27:30 lb.utils.events]:  eta: 0:17:33  iteration: 91/220  consumed_samples: 47104  total_loss: 7.944  lm_loss: 7.242  sop_loss: 0.701  time: 8.2264 s/iter  data_time: 0.0180 s/iter total_throughput: 62.24 samples/s lr: N/A  
+[04/03 07:27:38 lb.utils.events]:  eta: 0:17:25  iteration: 92/220  consumed_samples: 47616  total_loss: 7.944  lm_loss: 7.241  sop_loss: 0.7008  time: 8.2266 s/iter  data_time: 0.0180 s/iter total_throughput: 62.24 samples/s lr: N/A  
+[04/03 07:27:47 lb.utils.events]:  eta: 0:17:17  iteration: 93/220  consumed_samples: 48128  total_loss: 7.944  lm_loss: 7.238  sop_loss: 0.7007  time: 8.2250 s/iter  data_time: 0.0180 s/iter total_throughput: 62.25 samples/s lr: N/A  
+[04/03 07:27:55 lb.utils.events]:  eta: 0:17:09  iteration: 94/220  consumed_samples: 48640  total_loss: 7.944  lm_loss: 7.236  sop_loss: 0.7007  time: 8.2264 s/iter  data_time: 0.0179 s/iter total_throughput: 62.24 samples/s lr: N/A  
+[04/03 07:28:03 lb.utils.events]:  eta: 0:17:00  iteration: 95/220  consumed_samples: 49152  total_loss: 7.942  lm_loss: 7.233  sop_loss: 0.7003  time: 8.2247 s/iter  data_time: 0.0182 s/iter total_throughput: 62.25 samples/s lr: N/A  
+[04/03 07:28:11 lb.utils.events]:  eta: 0:16:52  iteration: 96/220  consumed_samples: 49664  total_loss: 7.941  lm_loss: 7.23  sop_loss: 0.7004  time: 8.2246 s/iter  data_time: 0.0182 s/iter total_throughput: 62.25 samples/s lr: N/A  
+[04/03 07:28:20 lb.utils.events]:  eta: 0:16:44  iteration: 97/220  consumed_samples: 50176  total_loss: 7.94  lm_loss: 7.23  sop_loss: 0.7001  time: 8.2255 s/iter  data_time: 0.0185 s/iter total_throughput: 62.25 samples/s lr: N/A  
+timestamp, name, driver_version, utilization.gpu [%], utilization.memory [%], memory.total [MiB], memory.free [MiB], memory.used [MiB]
+timestamp, name, driver_version, utilization.gpu [%], utilization.memory [%], memory.total [MiB], memory.free [MiB], memory.used [MiB]
+timestamp, name, driver_version, utilization.gpu [%], utilization.memory [%], memory.total [MiB], memory.free [MiB], memory.used [MiB]
+timestamp, name, driver_version, utilization.gpu [%], utilization.memory [%], memory.total [MiB], memory.free [MiB], memory.used [MiB]
+2023/04/03 07:28:20.222, NVIDIA GeForce RTX 3080 Ti, 470.94, 85 %, 14 %, 12053 MiB, 5325 MiB, 6728 MiB
+timestamp, name, driver_version, utilization.gpu [%], utilization.memory [%], memory.total [MiB], memory.free [MiB], memory.used [MiB]
+2023/04/03 07:28:20.223, NVIDIA GeForce RTX 3080 Ti, 470.94, 85 %, 14 %, 12053 MiB, 5325 MiB, 6728 MiB
+2023/04/03 07:28:20.225, NVIDIA GeForce RTX 3080 Ti, 470.94, 85 %, 14 %, 12053 MiB, 5325 MiB, 6728 MiB
+2023/04/03 07:28:20.231, NVIDIA GeForce RTX 3080 Ti, 470.94, 79 %, 13 %, 12053 MiB, 5453 MiB, 6600 MiB
+2023/04/03 07:28:20.230, NVIDIA GeForce RTX 3080 Ti, 470.94, 85 %, 14 %, 12053 MiB, 5325 MiB, 6728 MiB
+timestamp, name, driver_version, utilization.gpu [%], utilization.memory [%], memory.total [MiB], memory.free [MiB], memory.used [MiB]
+timestamp, name, driver_version, utilization.gpu [%], utilization.memory [%], memory.total [MiB], memory.free [MiB], memory.used [MiB]
+2023/04/03 07:28:20.233, NVIDIA GeForce RTX 3080 Ti, 470.94, 85 %, 14 %, 12053 MiB, 5325 MiB, 6728 MiB
+2023/04/03 07:28:20.235, NVIDIA GeForce RTX 3080 Ti, 470.94, 79 %, 13 %, 12053 MiB, 5453 MiB, 6600 MiB
+2023/04/03 07:28:20.237, NVIDIA GeForce RTX 3080 Ti, 470.94, 79 %, 13 %, 12053 MiB, 5453 MiB, 6600 MiB
+2023/04/03 07:28:20.244, NVIDIA GeForce RTX 3080 Ti, 470.94, 79 %, 13 %, 12053 MiB, 5453 MiB, 6600 MiB
+2023/04/03 07:28:20.245, NVIDIA GeForce RTX 3080 Ti, 470.94, 79 %, 13 %, 12053 MiB, 5453 MiB, 6600 MiB
+2023/04/03 07:28:20.246, NVIDIA GeForce RTX 3080 Ti, 470.94, 79 %, 13 %, 12053 MiB, 5453 MiB, 6600 MiB
+2023/04/03 07:28:20.246, NVIDIA GeForce RTX 3080 Ti, 470.94, 89 %, 15 %, 12053 MiB, 5325 MiB, 6728 MiB
+2023/04/03 07:28:20.246, NVIDIA GeForce RTX 3080 Ti, 470.94, 89 %, 15 %, 12053 MiB, 5325 MiB, 6728 MiB
+2023/04/03 07:28:20.247, NVIDIA GeForce RTX 3080 Ti, 470.94, 79 %, 13 %, 12053 MiB, 5453 MiB, 6600 MiB
+2023/04/03 07:28:20.250, NVIDIA GeForce RTX 3080 Ti, 470.94, 79 %, 13 %, 12053 MiB, 5453 MiB, 6600 MiB
+2023/04/03 07:28:20.257, NVIDIA GeForce RTX 3080 Ti, 470.94, 85 %, 14 %, 12053 MiB, 5455 MiB, 6598 MiB
+2023/04/03 07:28:20.257, NVIDIA GeForce RTX 3080 Ti, 470.94, 79 %, 13 %, 12053 MiB, 5453 MiB, 6600 MiB
+2023/04/03 07:28:20.259, NVIDIA GeForce RTX 3080 Ti, 470.94, 79 %, 13 %, 12053 MiB, 5453 MiB, 6600 MiB
+2023/04/03 07:28:20.264, NVIDIA GeForce RTX 3080 Ti, 470.94, 79 %, 13 %, 12053 MiB, 5453 MiB, 6600 MiB
+2023/04/03 07:28:20.265, NVIDIA GeForce RTX 3080 Ti, 470.94, 100 %, 16 %, 12053 MiB, 5453 MiB, 6600 MiB
+2023/04/03 07:28:20.267, NVIDIA GeForce RTX 3080 Ti, 470.94, 85 %, 14 %, 12053 MiB, 5455 MiB, 6598 MiB
+2023/04/03 07:28:20.269, NVIDIA GeForce RTX 3080 Ti, 470.94, 85 %, 14 %, 12053 MiB, 5455 MiB, 6598 MiB
+2023/04/03 07:28:20.276, NVIDIA GeForce RTX 3080 Ti, 470.94, 4 %, 2 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:20.277, NVIDIA GeForce RTX 3080 Ti, 470.94, 85 %, 14 %, 12053 MiB, 5455 MiB, 6598 MiB
+2023/04/03 07:28:20.279, NVIDIA GeForce RTX 3080 Ti, 470.94, 85 %, 14 %, 12053 MiB, 5455 MiB, 6598 MiB
+2023/04/03 07:28:20.280, NVIDIA GeForce RTX 3080 Ti, 470.94, 79 %, 13 %, 12053 MiB, 5453 MiB, 6600 MiB
+2023/04/03 07:28:20.286, NVIDIA GeForce RTX 3080 Ti, 470.94, 79 %, 13 %, 12053 MiB, 5453 MiB, 6600 MiB
+2023/04/03 07:28:20.286, NVIDIA GeForce RTX 3080 Ti, 470.94, 4 %, 2 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:20.291, NVIDIA GeForce RTX 3080 Ti, 470.94, 4 %, 2 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:20.295, NVIDIA GeForce RTX 3080 Ti, 470.94, 9 %, 2 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:20.297, NVIDIA GeForce RTX 3080 Ti, 470.94, 4 %, 2 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:20.299, NVIDIA GeForce RTX 3080 Ti, 470.94, 4 %, 2 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:20.301, NVIDIA GeForce RTX 3080 Ti, 470.94, 85 %, 14 %, 12053 MiB, 5455 MiB, 6598 MiB
+2023/04/03 07:28:20.302, NVIDIA GeForce RTX 3080 Ti, 470.94, 85 %, 14 %, 12053 MiB, 5455 MiB, 6598 MiB
+2023/04/03 07:28:20.302, NVIDIA GeForce RTX 3080 Ti, 470.94, 9 %, 2 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:20.304, NVIDIA GeForce RTX 3080 Ti, 470.94, 9 %, 2 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:20.310, NVIDIA GeForce RTX 3080 Ti, 470.94, 7 %, 2 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:20.310, NVIDIA GeForce RTX 3080 Ti, 470.94, 9 %, 2 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:20.313, NVIDIA GeForce RTX 3080 Ti, 470.94, 9 %, 2 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:20.314, NVIDIA GeForce RTX 3080 Ti, 470.94, 4 %, 2 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:20.314, NVIDIA GeForce RTX 3080 Ti, 470.94, 4 %, 2 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:20.315, NVIDIA GeForce RTX 3080 Ti, 470.94, 7 %, 2 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:20.318, NVIDIA GeForce RTX 3080 Ti, 470.94, 7 %, 2 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:20.324, NVIDIA GeForce RTX 3080 Ti, 470.94, 4 %, 0 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:20.325, NVIDIA GeForce RTX 3080 Ti, 470.94, 7 %, 2 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:20.326, NVIDIA GeForce RTX 3080 Ti, 470.94, 7 %, 2 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:20.327, NVIDIA GeForce RTX 3080 Ti, 470.94, 9 %, 2 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:20.328, NVIDIA GeForce RTX 3080 Ti, 470.94, 9 %, 2 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:20.328, NVIDIA GeForce RTX 3080 Ti, 470.94, 4 %, 0 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:20.332, NVIDIA GeForce RTX 3080 Ti, 470.94, 4 %, 0 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:20.338, NVIDIA GeForce RTX 3080 Ti, 470.94, 4 %, 0 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:20.340, NVIDIA GeForce RTX 3080 Ti, 470.94, 4 %, 0 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:20.341, NVIDIA GeForce RTX 3080 Ti, 470.94, 7 %, 2 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:20.342, NVIDIA GeForce RTX 3080 Ti, 470.94, 7 %, 2 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:20.354, NVIDIA GeForce RTX 3080 Ti, 470.94, 4 %, 0 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:20.355, NVIDIA GeForce RTX 3080 Ti, 470.94, 4 %, 0 %, 12053 MiB, 6027 MiB, 6026 MiB
+timestamp, name, driver_version, utilization.gpu [%], utilization.memory [%], memory.total [MiB], memory.free [MiB], memory.used [MiB]
+timestamp, name, driver_version, utilization.gpu [%], utilization.memory [%], memory.total [MiB], memory.free [MiB], memory.used [MiB]
+timestamp, name, driver_version, utilization.gpu [%], utilization.memory [%], memory.total [MiB], memory.free [MiB], memory.used [MiB]
+timestamp, name, driver_version, utilization.gpu [%], utilization.memory [%], memory.total [MiB], memory.free [MiB], memory.used [MiB]
+timestamp, name, driver_version, utilization.gpu [%], utilization.memory [%], memory.total [MiB], memory.free [MiB], memory.used [MiB]
+timestamp, name, driver_version, utilization.gpu [%], utilization.memory [%], memory.total [MiB], memory.free [MiB], memory.used [MiB]
+2023/04/03 07:28:20.658, NVIDIA GeForce RTX 3080 Ti, 470.94, 98 %, 16 %, 12053 MiB, 5325 MiB, 6728 MiB
+2023/04/03 07:28:20.659, NVIDIA GeForce RTX 3080 Ti, 470.94, 97 %, 15 %, 12053 MiB, 5325 MiB, 6728 MiB
+2023/04/03 07:28:20.661, NVIDIA GeForce RTX 3080 Ti, 470.94, 97 %, 15 %, 12053 MiB, 5325 MiB, 6728 MiB
+2023/04/03 07:28:20.663, NVIDIA GeForce RTX 3080 Ti, 470.94, 97 %, 15 %, 12053 MiB, 5325 MiB, 6728 MiB
+2023/04/03 07:28:20.663, NVIDIA GeForce RTX 3080 Ti, 470.94, 97 %, 15 %, 12053 MiB, 5325 MiB, 6728 MiB
+timestamp, name, driver_version, utilization.gpu [%], utilization.memory [%], memory.total [MiB], memory.free [MiB], memory.used [MiB]
+2023/04/03 07:28:20.669, NVIDIA GeForce RTX 3080 Ti, 470.94, 97 %, 15 %, 12053 MiB, 5325 MiB, 6728 MiB
+2023/04/03 07:28:20.672, NVIDIA GeForce RTX 3080 Ti, 470.94, 100 %, 16 %, 12053 MiB, 5453 MiB, 6600 MiB
+2023/04/03 07:28:20.676, NVIDIA GeForce RTX 3080 Ti, 470.94, 100 %, 16 %, 12053 MiB, 5453 MiB, 6600 MiB
+2023/04/03 07:28:20.678, NVIDIA GeForce RTX 3080 Ti, 470.94, 100 %, 16 %, 12053 MiB, 5453 MiB, 6600 MiB
+2023/04/03 07:28:20.681, NVIDIA GeForce RTX 3080 Ti, 470.94, 100 %, 15 %, 12053 MiB, 5453 MiB, 6600 MiB
+2023/04/03 07:28:20.681, NVIDIA GeForce RTX 3080 Ti, 470.94, 100 %, 15 %, 12053 MiB, 5453 MiB, 6600 MiB
+2023/04/03 07:28:20.682, NVIDIA GeForce RTX 3080 Ti, 470.94, 97 %, 15 %, 12053 MiB, 5325 MiB, 6728 MiB
+2023/04/03 07:28:20.686, NVIDIA GeForce RTX 3080 Ti, 470.94, 100 %, 15 %, 12053 MiB, 5453 MiB, 6600 MiB
+2023/04/03 07:28:20.687, NVIDIA GeForce RTX 3080 Ti, 470.94, 100 %, 16 %, 12053 MiB, 5453 MiB, 6600 MiB
+2023/04/03 07:28:20.688, NVIDIA GeForce RTX 3080 Ti, 470.94, 100 %, 16 %, 12053 MiB, 5453 MiB, 6600 MiB
+2023/04/03 07:28:20.692, NVIDIA GeForce RTX 3080 Ti, 470.94, 100 %, 16 %, 12053 MiB, 5453 MiB, 6600 MiB
+2023/04/03 07:28:20.698, NVIDIA GeForce RTX 3080 Ti, 470.94, 100 %, 16 %, 12053 MiB, 5453 MiB, 6600 MiB
+2023/04/03 07:28:20.699, NVIDIA GeForce RTX 3080 Ti, 470.94, 100 %, 16 %, 12053 MiB, 5453 MiB, 6600 MiB
+2023/04/03 07:28:20.702, NVIDIA GeForce RTX 3080 Ti, 470.94, 100 %, 15 %, 12053 MiB, 5453 MiB, 6600 MiB
+2023/04/03 07:28:20.706, NVIDIA GeForce RTX 3080 Ti, 470.94, 100 %, 16 %, 12053 MiB, 5453 MiB, 6600 MiB
+2023/04/03 07:28:20.709, NVIDIA GeForce RTX 3080 Ti, 470.94, 100 %, 16 %, 12053 MiB, 5455 MiB, 6598 MiB
+2023/04/03 07:28:20.712, NVIDIA GeForce RTX 3080 Ti, 470.94, 100 %, 16 %, 12053 MiB, 5455 MiB, 6598 MiB
+2023/04/03 07:28:20.716, NVIDIA GeForce RTX 3080 Ti, 470.94, 100 %, 16 %, 12053 MiB, 5455 MiB, 6598 MiB
+2023/04/03 07:28:20.722, NVIDIA GeForce RTX 3080 Ti, 470.94, 100 %, 16 %, 12053 MiB, 5455 MiB, 6598 MiB
+2023/04/03 07:28:20.723, NVIDIA GeForce RTX 3080 Ti, 470.94, 100 %, 16 %, 12053 MiB, 5455 MiB, 6598 MiB
+2023/04/03 07:28:20.727, NVIDIA GeForce RTX 3080 Ti, 470.94, 100 %, 16 %, 12053 MiB, 5453 MiB, 6600 MiB
+2023/04/03 07:28:20.730, NVIDIA GeForce RTX 3080 Ti, 470.94, 100 %, 16 %, 12053 MiB, 5455 MiB, 6598 MiB
+2023/04/03 07:28:20.733, NVIDIA GeForce RTX 3080 Ti, 470.94, 91 %, 14 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:20.738, NVIDIA GeForce RTX 3080 Ti, 470.94, 91 %, 14 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:20.741, NVIDIA GeForce RTX 3080 Ti, 470.94, 91 %, 14 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:20.746, NVIDIA GeForce RTX 3080 Ti, 470.94, 99 %, 25 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:20.748, NVIDIA GeForce RTX 3080 Ti, 470.94, 99 %, 25 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:20.752, NVIDIA GeForce RTX 3080 Ti, 470.94, 100 %, 16 %, 12053 MiB, 5455 MiB, 6598 MiB
+2023/04/03 07:28:20.757, NVIDIA GeForce RTX 3080 Ti, 470.94, 99 %, 25 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:20.761, NVIDIA GeForce RTX 3080 Ti, 470.94, 100 %, 16 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:20.763, NVIDIA GeForce RTX 3080 Ti, 470.94, 100 %, 16 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:20.768, NVIDIA GeForce RTX 3080 Ti, 470.94, 100 %, 16 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:20.773, NVIDIA GeForce RTX 3080 Ti, 470.94, 100 %, 16 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:20.774, NVIDIA GeForce RTX 3080 Ti, 470.94, 100 %, 16 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:20.777, NVIDIA GeForce RTX 3080 Ti, 470.94, 99 %, 25 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:20.780, NVIDIA GeForce RTX 3080 Ti, 470.94, 100 %, 16 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:20.784, NVIDIA GeForce RTX 3080 Ti, 470.94, 99 %, 25 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:20.786, NVIDIA GeForce RTX 3080 Ti, 470.94, 99 %, 25 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:20.789, NVIDIA GeForce RTX 3080 Ti, 470.94, 99 %, 25 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:20.794, NVIDIA GeForce RTX 3080 Ti, 470.94, 99 %, 25 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:20.796, NVIDIA GeForce RTX 3080 Ti, 470.94, 99 %, 25 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:20.797, NVIDIA GeForce RTX 3080 Ti, 470.94, 100 %, 16 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:20.801, NVIDIA GeForce RTX 3080 Ti, 470.94, 99 %, 25 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:20.805, NVIDIA GeForce RTX 3080 Ti, 470.94, 98 %, 21 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:20.808, NVIDIA GeForce RTX 3080 Ti, 470.94, 98 %, 21 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:20.812, NVIDIA GeForce RTX 3080 Ti, 470.94, 98 %, 21 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:20.818, NVIDIA GeForce RTX 3080 Ti, 470.94, 98 %, 21 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:20.819, NVIDIA GeForce RTX 3080 Ti, 470.94, 98 %, 21 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:20.822, NVIDIA GeForce RTX 3080 Ti, 470.94, 99 %, 25 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:20.824, NVIDIA GeForce RTX 3080 Ti, 470.94, 98 %, 21 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:20.843, NVIDIA GeForce RTX 3080 Ti, 470.94, 98 %, 21 %, 12053 MiB, 6027 MiB, 6026 MiB
+[04/03 07:28:28 lb.utils.events]:  eta: 0:16:36  iteration: 98/220  consumed_samples: 50688  total_loss: 7.939  lm_loss: 7.23  sop_loss: 0.6999  time: 8.2259 s/iter  data_time: 0.0185 s/iter total_throughput: 62.24 samples/s lr: N/A  
+timestamp, name, driver_version, utilization.gpu [%], utilization.memory [%], memory.total [MiB], memory.free [MiB], memory.used [MiB]
+2023/04/03 07:28:28.410, NVIDIA GeForce RTX 3080 Ti, 470.94, 95 %, 14 %, 12053 MiB, 5325 MiB, 6728 MiB
+2023/04/03 07:28:28.411, NVIDIA GeForce RTX 3080 Ti, 470.94, 85 %, 14 %, 12053 MiB, 5453 MiB, 6600 MiB
+2023/04/03 07:28:28.413, NVIDIA GeForce RTX 3080 Ti, 470.94, 99 %, 18 %, 12053 MiB, 5453 MiB, 6600 MiB
+2023/04/03 07:28:28.414, NVIDIA GeForce RTX 3080 Ti, 470.94, 98 %, 14 %, 12053 MiB, 5455 MiB, 6598 MiB
+2023/04/03 07:28:28.415, NVIDIA GeForce RTX 3080 Ti, 470.94, 0 %, 0 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:28.416, NVIDIA GeForce RTX 3080 Ti, 470.94, 0 %, 0 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:28.417, NVIDIA GeForce RTX 3080 Ti, 470.94, 2 %, 1 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:28.418, NVIDIA GeForce RTX 3080 Ti, 470.94, 1 %, 1 %, 12053 MiB, 6027 MiB, 6026 MiB
+timestamp, name, driver_version, utilization.gpu [%], utilization.memory [%], memory.total [MiB], memory.free [MiB], memory.used [MiB]
+2023/04/03 07:28:28.473, NVIDIA GeForce RTX 3080 Ti, 470.94, 95 %, 14 %, 12053 MiB, 5325 MiB, 6728 MiB
+2023/04/03 07:28:28.474, NVIDIA GeForce RTX 3080 Ti, 470.94, 85 %, 14 %, 12053 MiB, 5453 MiB, 6600 MiB
+2023/04/03 07:28:28.475, NVIDIA GeForce RTX 3080 Ti, 470.94, 21 %, 3 %, 12053 MiB, 5453 MiB, 6600 MiB
+2023/04/03 07:28:28.476, NVIDIA GeForce RTX 3080 Ti, 470.94, 98 %, 14 %, 12053 MiB, 5455 MiB, 6598 MiB
+2023/04/03 07:28:28.476, NVIDIA GeForce RTX 3080 Ti, 470.94, 2 %, 1 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:28.477, NVIDIA GeForce RTX 3080 Ti, 470.94, 2 %, 1 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:28.481, NVIDIA GeForce RTX 3080 Ti, 470.94, 2 %, 1 %, 12053 MiB, 6027 MiB, 6026 MiB
+2023/04/03 07:28:28.482, NVIDIA GeForce RTX 3080 Ti, 470.94, 1 %, 1 %, 12053 MiB, 6027 MiB, 6026 MiB
+[04/03 07:28:36 lb.utils.events]:  eta: 0:16:28  iteration: 99/220  consumed_samples: 51200  total_loss: 7.938  lm_loss: 7.23  sop_loss: 0.6994  time: 8.2229 s/iter  data_time: 0.0183 s/iter total_throughput: 62.27 samples/s lr: N/A  
+[04/03 07:28:44 lb.utils.events]:  eta: 0:16:19  iteration: 100/220  consumed_samples: 51712  total_loss: 7.936  lm_loss: 7.23  sop_loss: 0.6989  time: 8.2228 s/iter  data_time: 0.0183 s/iter total_throughput: 62.27 samples/s lr: N/A  
+[04/03 07:28:52 lb.utils.events]:  eta: 0:16:11  iteration: 101/220  consumed_samples: 52224  total_loss: 7.936  lm_loss: 7.228  sop_loss: 0.6988  time: 8.2229 s/iter  data_time: 0.0180 s/iter total_throughput: 62.27 samples/s lr: N/A  
+[04/03 07:29:01 lb.utils.events]:  eta: 0:16:03  iteration: 102/220  consumed_samples: 52736  total_loss: 7.936  lm_loss: 7.226  sop_loss: 0.6986  time: 8.2219 s/iter  data_time: 0.0182 s/iter total_throughput: 62.27 samples/s lr: N/A  
+[04/03 07:29:09 lb.utils.events]:  eta: 0:15:54  iteration: 103/220  consumed_samples: 53248  total_loss: 7.934  lm_loss: 7.225  sop_loss: 0.6985  time: 8.2218 s/iter  data_time: 0.0181 s/iter total_throughput: 62.27 samples/s lr: N/A  
+[04/03 07:29:17 lb.utils.events]:  eta: 0:15:46  iteration: 104/220  consumed_samples: 53760  total_loss: 7.933  lm_loss: 7.224  sop_loss: 0.6984  time: 8.2223 s/iter  data_time: 0.0181 s/iter total_throughput: 62.27 samples/s lr: N/A  
+[04/03 07:29:25 lb.utils.events]:  eta: 0:15:38  iteration: 105/220  consumed_samples: 54272  total_loss: 7.932  lm_loss: 7.224  sop_loss: 0.6985  time: 8.2227 s/iter  data_time: 0.0180 s/iter total_throughput: 62.27 samples/s lr: N/A  
+[04/03 07:29:34 lb.utils.events]:  eta: 0:15:30  iteration: 106/220  consumed_samples: 54784  total_loss: 7.932  lm_loss: 7.224  sop_loss: 0.6984  time: 8.2222 s/iter  data_time: 0.0179 s/iter total_throughput: 62.27 samples/s lr: N/A  
+[04/03 07:29:42 lb.utils.events]:  eta: 0:15:21  iteration: 107/220  consumed_samples: 55296  total_loss: 7.929  lm_loss: 7.223  sop_loss: 0.6985  time: 8.2200 s/iter  data_time: 0.0178 s/iter total_throughput: 62.29 samples/s lr: N/A  
+[04/03 07:29:50 lb.utils.events]:  eta: 0:15:13  iteration: 108/220  consumed_samples: 55808  total_loss: 7.927  lm_loss: 7.223  sop_loss: 0.6984  time: 8.2207 s/iter  data_time: 0.0177 s/iter total_throughput: 62.28 samples/s lr: N/A  
+[04/03 07:29:58 lb.utils.events]:  eta: 0:15:05  iteration: 109/220  consumed_samples: 56320  total_loss: 7.927  lm_loss: 7.223  sop_loss: 0.6983  time: 8.2204 s/iter  data_time: 0.0174 s/iter total_throughput: 62.28 samples/s lr: N/A  
+[04/03 07:30:06 lb.utils.events]:  eta: 0:14:56  iteration: 110/220  consumed_samples: 56832  total_loss: 7.926  lm_loss: 7.222  sop_loss: 0.6983  time: 8.2198 s/iter  data_time: 0.0175 s/iter total_throughput: 62.29 samples/s lr: N/A  
+[04/03 07:30:14 lb.utils.events]:  eta: 0:14:48  iteration: 111/220  consumed_samples: 57344  total_loss: 7.924  lm_loss: 7.222  sop_loss: 0.6983  time: 8.2198 s/iter  data_time: 0.0176 s/iter total_throughput: 62.29 samples/s lr: N/A  
+[04/03 07:30:22 lb.utils.events]:  eta: 0:14:40  iteration: 112/220  consumed_samples: 57856  total_loss: 7.923  lm_loss: 7.222  sop_loss: 0.6983  time: 8.2188 s/iter  data_time: 0.0177 s/iter total_throughput: 62.30 samples/s lr: N/A  
+[04/03 07:30:31 lb.utils.events]:  eta: 0:14:32  iteration: 113/220  consumed_samples: 58368  total_loss: 7.922  lm_loss: 7.222  sop_loss: 0.6982  time: 8.2186 s/iter  data_time: 0.0175 s/iter total_throughput: 62.30 samples/s lr: N/A  
+[04/03 07:30:39 lb.utils.events]:  eta: 0:14:23  iteration: 114/220  consumed_samples: 58880  total_loss: 7.922  lm_loss: 7.221  sop_loss: 0.6982  time: 8.2178 s/iter  data_time: 0.0175 s/iter total_throughput: 62.30 samples/s lr: N/A  
+[04/03 07:30:47 lb.utils.events]:  eta: 0:14:15  iteration: 115/220  consumed_samples: 59392  total_loss: 7.922  lm_loss: 7.221  sop_loss: 0.6981  time: 8.2159 s/iter  data_time: 0.0173 s/iter total_throughput: 62.32 samples/s lr: N/A  
+[04/03 07:30:55 lb.utils.events]:  eta: 0:14:07  iteration: 116/220  consumed_samples: 59904  total_loss: 7.921  lm_loss: 7.221  sop_loss: 0.698  time: 8.2164 s/iter  data_time: 0.0171 s/iter total_throughput: 62.31 samples/s lr: N/A  
+[04/03 07:31:03 lb.utils.events]:  eta: 0:13:59  iteration: 117/220  consumed_samples: 60416  total_loss: 7.921  lm_loss: 7.22  sop_loss: 0.698  time: 8.2159 s/iter  data_time: 0.0169 s/iter total_throughput: 62.32 samples/s lr: N/A  
+[04/03 07:31:12 lb.utils.events]:  eta: 0:13:50  iteration: 118/220  consumed_samples: 60928  total_loss: 7.92  lm_loss: 7.22  sop_loss: 0.698  time: 8.2162 s/iter  data_time: 0.0167 s/iter total_throughput: 62.32 samples/s lr: N/A  
+[04/03 07:31:20 lb.utils.events]:  eta: 0:13:42  iteration: 119/220  consumed_samples: 61440  total_loss: 7.92  lm_loss: 7.22  sop_loss: 0.698  time: 8.2143 s/iter  data_time: 0.0169 s/iter total_throughput: 62.33 samples/s lr: N/A  
+[04/03 07:31:28 lb.utils.events]:  eta: 0:13:34  iteration: 120/220  consumed_samples: 61952  total_loss: 7.92  lm_loss: 7.221  sop_loss: 0.6979  time: 8.2149 s/iter  data_time: 0.0168 s/iter total_throughput: 62.33 samples/s lr: N/A  
+[04/03 07:31:36 lb.utils.events]:  eta: 0:13:26  iteration: 121/220  consumed_samples: 62464  total_loss: 7.92  lm_loss: 7.221  sop_loss: 0.6978  time: 8.2145 s/iter  data_time: 0.0171 s/iter total_throughput: 62.33 samples/s lr: N/A  
+[04/03 07:31:44 lb.utils.events]:  eta: 0:13:17  iteration: 122/220  consumed_samples: 62976  total_loss: 7.919  lm_loss: 7.221  sop_loss: 0.6976  time: 8.2145 s/iter  data_time: 0.0169 s/iter total_throughput: 62.33 samples/s lr: N/A  
+[04/03 07:31:52 lb.utils.events]:  eta: 0:13:09  iteration: 123/220  consumed_samples: 63488  total_loss: 7.919  lm_loss: 7.22  sop_loss: 0.6975  time: 8.2147 s/iter  data_time: 0.0166 s/iter total_throughput: 62.33 samples/s lr: N/A  
+[04/03 07:32:01 lb.utils.events]:  eta: 0:13:01  iteration: 124/220  consumed_samples: 64000  total_loss: 7.918  lm_loss: 7.22  sop_loss: 0.6974  time: 8.2148 s/iter  data_time: 0.0167 s/iter total_throughput: 62.33 samples/s lr: N/A  
+[04/03 07:32:09 lb.utils.events]:  eta: 0:12:53  iteration: 125/220  consumed_samples: 64512  total_loss: 7.918  lm_loss: 7.219  sop_loss: 0.6974  time: 8.2153 s/iter  data_time: 0.0169 s/iter total_throughput: 62.32 samples/s lr: N/A  
+[04/03 07:32:17 lb.utils.events]:  eta: 0:12:45  iteration: 126/220  consumed_samples: 65024  total_loss: 7.918  lm_loss: 7.218  sop_loss: 0.6974  time: 8.2146 s/iter  data_time: 0.0170 s/iter total_throughput: 62.33 samples/s lr: N/A  
+[04/03 07:32:25 lb.utils.events]:  eta: 0:12:36  iteration: 127/220  consumed_samples: 65536  total_loss: 7.918  lm_loss: 7.218  sop_loss: 0.6973  time: 8.2149 s/iter  data_time: 0.0170 s/iter total_throughput: 62.33 samples/s lr: N/A  
+[04/03 07:32:34 lb.utils.events]:  eta: 0:12:28  iteration: 128/220  consumed_samples: 66048  total_loss: 7.917  lm_loss: 7.218  sop_loss: 0.6973  time: 8.2145 s/iter  data_time: 0.0173 s/iter total_throughput: 62.33 samples/s lr: N/A  
+[04/03 07:32:42 lb.utils.events]:  eta: 0:12:20  iteration: 129/220  consumed_samples: 66560  total_loss: 7.917  lm_loss: 7.218  sop_loss: 0.6972  time: 8.2144 s/iter  data_time: 0.0173 s/iter total_throughput: 62.33 samples/s lr: N/A  
+[04/03 07:32:50 lb.utils.events]:  eta: 0:12:12  iteration: 130/220  consumed_samples: 67072  total_loss: 7.917  lm_loss: 7.218  sop_loss: 0.6971  time: 8.2150 s/iter  data_time: 0.0174 s/iter total_throughput: 62.33 samples/s lr: N/A  
+[04/03 07:32:58 lb.utils.events]:  eta: 0:12:03  iteration: 131/220  consumed_samples: 67584  total_loss: 7.916  lm_loss: 7.217  sop_loss: 0.697  time: 8.2150 s/iter  data_time: 0.0172 s/iter total_throughput: 62.33 samples/s lr: N/A  
+[04/03 07:33:07 lb.utils.events]:  eta: 0:11:55  iteration: 132/220  consumed_samples: 68096  total_loss: 7.915  lm_loss: 7.216  sop_loss: 0.6969  time: 8.2155 s/iter  data_time: 0.0172 s/iter total_throughput: 62.32 samples/s lr: N/A  
+[04/03 07:33:15 lb.utils.events]:  eta: 0:11:47  iteration: 133/220  consumed_samples: 68608  total_loss: 7.914  lm_loss: 7.216  sop_loss: 0.6969  time: 8.2145 s/iter  data_time: 0.0174 s/iter total_throughput: 62.33 samples/s lr: N/A  
+[04/03 07:33:23 lb.utils.events]:  eta: 0:11:39  iteration: 134/220  consumed_samples: 69120  total_loss: 7.914  lm_loss: 7.216  sop_loss: 0.6968  time: 8.2136 s/iter  data_time: 0.0173 s/iter total_throughput: 62.34 samples/s lr: N/A  
+[04/03 07:33:31 lb.utils.events]:  eta: 0:11:30  iteration: 135/220  consumed_samples: 69632  total_loss: 7.913  lm_loss: 7.215  sop_loss: 0.6968  time: 8.2136 s/iter  data_time: 0.0173 s/iter total_throughput: 62.34 samples/s lr: N/A  
+[04/03 07:33:39 lb.utils.events]:  eta: 0:11:22  iteration: 136/220  consumed_samples: 70144  total_loss: 7.914  lm_loss: 7.216  sop_loss: 0.6967  time: 8.2136 s/iter  data_time: 0.0174 s/iter total_throughput: 62.34 samples/s lr: N/A  
+[04/03 07:33:48 lb.utils.events]:  eta: 0:11:14  iteration: 137/220  consumed_samples: 70656  total_loss: 7.913  lm_loss: 7.215  sop_loss: 0.6967  time: 8.2140 s/iter  data_time: 0.0173 s/iter total_throughput: 62.33 samples/s lr: N/A  
+[04/03 07:33:56 lb.utils.events]:  eta: 0:11:06  iteration: 138/220  consumed_samples: 71168  total_loss: 7.913  lm_loss: 7.215  sop_loss: 0.6967  time: 8.2130 s/iter  data_time: 0.0175 s/iter total_throughput: 62.34 samples/s lr: N/A  
+[04/03 07:34:04 lb.utils.events]:  eta: 0:10:57  iteration: 139/220  consumed_samples: 71680  total_loss: 7.913  lm_loss: 7.215  sop_loss: 0.6966  time: 8.2128 s/iter  data_time: 0.0173 s/iter total_throughput: 62.34 samples/s lr: N/A  
+[04/03 07:34:12 lb.utils.events]:  eta: 0:10:49  iteration: 140/220  consumed_samples: 72192  total_loss: 7.913  lm_loss: 7.215  sop_loss: 0.6965  time: 8.2118 s/iter  data_time: 0.0174 s/iter total_throughput: 62.35 samples/s lr: N/A  
+[04/03 07:34:20 lb.utils.events]:  eta: 0:10:41  iteration: 141/220  consumed_samples: 72704  total_loss: 7.912  lm_loss: 7.214  sop_loss: 0.6961  time: 8.2123 s/iter  data_time: 0.0171 s/iter total_throughput: 62.35 samples/s lr: N/A  
+[04/03 07:34:29 lb.utils.events]:  eta: 0:10:33  iteration: 142/220  consumed_samples: 73216  total_loss: 7.913  lm_loss: 7.215  sop_loss: 0.6957  time: 8.2121 s/iter  data_time: 0.0171 s/iter total_throughput: 62.35 samples/s lr: N/A  
+[04/03 07:34:37 lb.utils.events]:  eta: 0:10:24  iteration: 143/220  consumed_samples: 73728  total_loss: 7.912  lm_loss: 7.214  sop_loss: 0.6956  time: 8.2116 s/iter  data_time: 0.0172 s/iter total_throughput: 62.35 samples/s lr: N/A  
+[04/03 07:34:45 lb.utils.events]:  eta: 0:10:16  iteration: 144/220  consumed_samples: 74240  total_loss: 7.913  lm_loss: 7.215  sop_loss: 0.6954  time: 8.2124 s/iter  data_time: 0.0172 s/iter total_throughput: 62.34 samples/s lr: N/A  
+[04/03 07:34:53 lb.utils.events]:  eta: 0:10:08  iteration: 145/220  consumed_samples: 74752  total_loss: 7.912  lm_loss: 7.214  sop_loss: 0.6952  time: 8.2129 s/iter  data_time: 0.0172 s/iter total_throughput: 62.34 samples/s lr: N/A  
+[04/03 07:35:02 lb.utils.events]:  eta: 0:10:00  iteration: 146/220  consumed_samples: 75264  total_loss: 7.912  lm_loss: 7.213  sop_loss: 0.6951  time: 8.2125 s/iter  data_time: 0.0171 s/iter total_throughput: 62.34 samples/s lr: N/A  
+[04/03 07:35:10 lb.utils.events]:  eta: 0:09:51  iteration: 147/220  consumed_samples: 75776  total_loss: 7.912  lm_loss: 7.213  sop_loss: 0.6951  time: 8.2115 s/iter  data_time: 0.0171 s/iter total_throughput: 62.35 samples/s lr: N/A  
+[04/03 07:35:18 lb.utils.events]:  eta: 0:09:43  iteration: 148/220  consumed_samples: 76288  total_loss: 7.912  lm_loss: 7.213  sop_loss: 0.695  time: 8.2119 s/iter  data_time: 0.0169 s/iter total_throughput: 62.35 samples/s lr: N/A  
+[04/03 07:35:26 lb.utils.events]:  eta: 0:09:35  iteration: 149/220  consumed_samples: 76800  total_loss: 7.912  lm_loss: 7.213  sop_loss: 0.695  time: 8.2121 s/iter  data_time: 0.0168 s/iter total_throughput: 62.35 samples/s lr: N/A  
+[04/03 07:35:34 lb.utils.events]:  eta: 0:09:27  iteration: 150/220  consumed_samples: 77312  total_loss: 7.911  lm_loss: 7.213  sop_loss: 0.6949  time: 8.2122 s/iter  data_time: 0.0166 s/iter total_throughput: 62.35 samples/s lr: N/A  
+[04/03 07:35:43 lb.utils.events]:  eta: 0:09:19  iteration: 151/220  consumed_samples: 77824  total_loss: 7.911  lm_loss: 7.212  sop_loss: 0.6948  time: 8.2121 s/iter  data_time: 0.0168 s/iter total_throughput: 62.35 samples/s lr: N/A  
+[04/03 07:35:51 lb.utils.events]:  eta: 0:09:10  iteration: 152/220  consumed_samples: 78336  total_loss: 7.91  lm_loss: 7.213  sop_loss: 0.6948  time: 8.2118 s/iter  data_time: 0.0167 s/iter total_throughput: 62.35 samples/s lr: N/A  
+[04/03 07:35:59 lb.utils.events]:  eta: 0:09:02  iteration: 153/220  consumed_samples: 78848  total_loss: 7.91  lm_loss: 7.212  sop_loss: 0.6948  time: 8.2105 s/iter  data_time: 0.0166 s/iter total_throughput: 62.36 samples/s lr: N/A  
+[04/03 07:36:07 lb.utils.events]:  eta: 0:08:54  iteration: 154/220  consumed_samples: 79360  total_loss: 7.91  lm_loss: 7.212  sop_loss: 0.6949  time: 8.2097 s/iter  data_time: 0.0165 s/iter total_throughput: 62.37 samples/s lr: N/A  
+[04/03 07:36:15 lb.utils.events]:  eta: 0:08:46  iteration: 155/220  consumed_samples: 79872  total_loss: 7.91  lm_loss: 7.212  sop_loss: 0.695  time: 8.2101 s/iter  data_time: 0.0167 s/iter total_throughput: 62.36 samples/s lr: N/A  
+[04/03 07:36:23 lb.utils.events]:  eta: 0:08:37  iteration: 156/220  consumed_samples: 80384  total_loss: 7.91  lm_loss: 7.211  sop_loss: 0.6949  time: 8.2101 s/iter  data_time: 0.0165 s/iter total_throughput: 62.36 samples/s lr: N/A  
+[04/03 07:36:32 lb.utils.events]:  eta: 0:08:29  iteration: 157/220  consumed_samples: 80896  total_loss: 7.91  lm_loss: 7.212  sop_loss: 0.6948  time: 8.2103 s/iter  data_time: 0.0164 s/iter total_throughput: 62.36 samples/s lr: N/A  
+[04/03 07:36:40 lb.utils.events]:  eta: 0:08:21  iteration: 158/220  consumed_samples: 81408  total_loss: 7.91  lm_loss: 7.211  sop_loss: 0.6948  time: 8.2106 s/iter  data_time: 0.0164 s/iter total_throughput: 62.36 samples/s lr: N/A  
+[04/03 07:36:48 lb.utils.events]:  eta: 0:08:13  iteration: 159/220  consumed_samples: 81920  total_loss: 7.909  lm_loss: 7.211  sop_loss: 0.6948  time: 8.2111 s/iter  data_time: 0.0166 s/iter total_throughput: 62.35 samples/s lr: N/A  
+[04/03 07:36:57 lb.utils.events]:  eta: 0:08:05  iteration: 160/220  consumed_samples: 82432  total_loss: 7.909  lm_loss: 7.211  sop_loss: 0.6948  time: 8.2112 s/iter  data_time: 0.0164 s/iter total_throughput: 62.35 samples/s lr: N/A  
+[04/03 07:37:05 lb.utils.events]:  eta: 0:07:56  iteration: 161/220  consumed_samples: 82944  total_loss: 7.909  lm_loss: 7.211  sop_loss: 0.6948  time: 8.2111 s/iter  data_time: 0.0165 s/iter total_throughput: 62.35 samples/s lr: N/A  
+[04/03 07:37:13 lb.utils.events]:  eta: 0:07:48  iteration: 162/220  consumed_samples: 83456  total_loss: 7.909  lm_loss: 7.211  sop_loss: 0.6948  time: 8.2104 s/iter  data_time: 0.0165 s/iter total_throughput: 62.36 samples/s lr: N/A  
+[04/03 07:37:21 lb.utils.events]:  eta: 0:07:40  iteration: 163/220  consumed_samples: 83968  total_loss: 7.909  lm_loss: 7.211  sop_loss: 0.6948  time: 8.2100 s/iter  data_time: 0.0166 s/iter total_throughput: 62.36 samples/s lr: N/A  
+[04/03 07:37:29 lb.utils.events]:  eta: 0:07:32  iteration: 164/220  consumed_samples: 84480  total_loss: 7.908  lm_loss: 7.211  sop_loss: 0.6948  time: 8.2100 s/iter  data_time: 0.0165 s/iter total_throughput: 62.36 samples/s lr: N/A  
+[04/03 07:37:37 lb.utils.events]:  eta: 0:07:23  iteration: 165/220  consumed_samples: 84992  total_loss: 7.909  lm_loss: 7.211  sop_loss: 0.6948  time: 8.2099 s/iter  data_time: 0.0166 s/iter total_throughput: 62.36 samples/s lr: N/A  
+[04/03 07:37:46 lb.utils.events]:  eta: 0:07:15  iteration: 166/220  consumed_samples: 85504  total_loss: 7.908  lm_loss: 7.211  sop_loss: 0.6949  time: 8.2095 s/iter  data_time: 0.0166 s/iter total_throughput: 62.37 samples/s lr: N/A  
+[04/03 07:37:54 lb.utils.events]:  eta: 0:07:07  iteration: 167/220  consumed_samples: 86016  total_loss: 7.908  lm_loss: 7.211  sop_loss: 0.6948  time: 8.2100 s/iter  data_time: 0.0166 s/iter total_throughput: 62.36 samples/s lr: N/A  
+[04/03 07:38:02 lb.utils.events]:  eta: 0:06:59  iteration: 168/220  consumed_samples: 86528  total_loss: 7.908  lm_loss: 7.211  sop_loss: 0.6948  time: 8.2098 s/iter  data_time: 0.0165 s/iter total_throughput: 62.36 samples/s lr: N/A  
+[04/03 07:38:10 lb.utils.events]:  eta: 0:06:50  iteration: 169/220  consumed_samples: 87040  total_loss: 7.907  lm_loss: 7.21  sop_loss: 0.6948  time: 8.2096 s/iter  data_time: 0.0166 s/iter total_throughput: 62.37 samples/s lr: N/A  
+[04/03 07:38:19 lb.utils.events]:  eta: 0:06:42  iteration: 170/220  consumed_samples: 87552  total_loss: 7.907  lm_loss: 7.21  sop_loss: 0.6949  time: 8.2103 s/iter  data_time: 0.0168 s/iter total_throughput: 62.36 samples/s lr: N/A  
+[04/03 07:38:27 lb.utils.events]:  eta: 0:06:34  iteration: 171/220  consumed_samples: 88064  total_loss: 7.907  lm_loss: 7.21  sop_loss: 0.695  time: 8.2104 s/iter  data_time: 0.0166 s/iter total_throughput: 62.36 samples/s lr: N/A  
+[04/03 07:38:35 lb.utils.events]:  eta: 0:06:26  iteration: 172/220  consumed_samples: 88576  total_loss: 7.906  lm_loss: 7.21  sop_loss: 0.695  time: 8.2100 s/iter  data_time: 0.0167 s/iter total_throughput: 62.36 samples/s lr: N/A  
+[04/03 07:38:43 lb.utils.events]:  eta: 0:06:18  iteration: 173/220  consumed_samples: 89088  total_loss: 7.906  lm_loss: 7.209  sop_loss: 0.6951  time: 8.2102 s/iter  data_time: 0.0168 s/iter total_throughput: 62.36 samples/s lr: N/A  
+[04/03 07:38:51 lb.utils.events]:  eta: 0:06:09  iteration: 174/220  consumed_samples: 89600  total_loss: 7.906  lm_loss: 7.209  sop_loss: 0.6951  time: 8.2096 s/iter  data_time: 0.0168 s/iter total_throughput: 62.37 samples/s lr: N/A  
+[04/03 07:39:00 lb.utils.events]:  eta: 0:06:01  iteration: 175/220  consumed_samples: 90112  total_loss: 7.906  lm_loss: 7.209  sop_loss: 0.6953  time: 8.2097 s/iter  data_time: 0.0167 s/iter total_throughput: 62.37 samples/s lr: N/A  
+[04/03 07:39:08 lb.utils.events]:  eta: 0:05:53  iteration: 176/220  consumed_samples: 90624  total_loss: 7.905  lm_loss: 7.209  sop_loss: 0.6951  time: 8.2098 s/iter  data_time: 0.0167 s/iter total_throughput: 62.36 samples/s lr: N/A  
+[04/03 07:39:16 lb.utils.events]:  eta: 0:05:45  iteration: 177/220  consumed_samples: 91136  total_loss: 7.905  lm_loss: 7.208  sop_loss: 0.6951  time: 8.2093 s/iter  data_time: 0.0168 s/iter total_throughput: 62.37 samples/s lr: N/A  
+[04/03 07:39:24 lb.utils.events]:  eta: 0:05:36  iteration: 178/220  consumed_samples: 91648  total_loss: 7.905  lm_loss: 7.208  sop_loss: 0.695  time: 8.2097 s/iter  data_time: 0.0167 s/iter total_throughput: 62.37 samples/s lr: N/A  
+[04/03 07:39:32 lb.utils.events]:  eta: 0:05:28  iteration: 179/220  consumed_samples: 92160  total_loss: 7.905  lm_loss: 7.208  sop_loss: 0.695  time: 8.2093 s/iter  data_time: 0.0168 s/iter total_throughput: 62.37 samples/s lr: N/A  
+[04/03 07:39:41 lb.utils.events]:  eta: 0:05:20  iteration: 180/220  consumed_samples: 92672  total_loss: 7.905  lm_loss: 7.208  sop_loss: 0.6949  time: 8.2090 s/iter  data_time: 0.0169 s/iter total_throughput: 62.37 samples/s lr: N/A  
+[04/03 07:39:49 lb.utils.events]:  eta: 0:05:12  iteration: 181/220  consumed_samples: 93184  total_loss: 7.905  lm_loss: 7.208  sop_loss: 0.695  time: 8.2093 s/iter  data_time: 0.0168 s/iter total_throughput: 62.37 samples/s lr: N/A  
+[04/03 07:39:57 lb.utils.events]:  eta: 0:05:04  iteration: 182/220  consumed_samples: 93696  total_loss: 7.904  lm_loss: 7.208  sop_loss: 0.6949  time: 8.2091 s/iter  data_time: 0.0169 s/iter total_throughput: 62.37 samples/s lr: N/A  
+[04/03 07:40:05 lb.utils.events]:  eta: 0:04:55  iteration: 183/220  consumed_samples: 94208  total_loss: 7.904  lm_loss: 7.208  sop_loss: 0.6948  time: 8.2088 s/iter  data_time: 0.0169 s/iter total_throughput: 62.37 samples/s lr: N/A  
+[04/03 07:40:13 lb.utils.events]:  eta: 0:04:47  iteration: 184/220  consumed_samples: 94720  total_loss: 7.904  lm_loss: 7.208  sop_loss: 0.6948  time: 8.2087 s/iter  data_time: 0.0167 s/iter total_throughput: 62.37 samples/s lr: N/A  
+[04/03 07:40:22 lb.utils.events]:  eta: 0:04:39  iteration: 185/220  consumed_samples: 95232  total_loss: 7.904  lm_loss: 7.208  sop_loss: 0.6948  time: 8.2094 s/iter  data_time: 0.0164 s/iter total_throughput: 62.37 samples/s lr: N/A  
+[04/03 07:40:30 lb.utils.events]:  eta: 0:04:31  iteration: 186/220  consumed_samples: 95744  total_loss: 7.904  lm_loss: 7.207  sop_loss: 0.6948  time: 8.2098 s/iter  data_time: 0.0165 s/iter total_throughput: 62.36 samples/s lr: N/A  
+[04/03 07:40:38 lb.utils.events]:  eta: 0:04:22  iteration: 187/220  consumed_samples: 96256  total_loss: 7.904  lm_loss: 7.207  sop_loss: 0.6948  time: 8.2092 s/iter  data_time: 0.0165 s/iter total_throughput: 62.37 samples/s lr: N/A  
+[04/03 07:40:46 lb.utils.events]:  eta: 0:04:14  iteration: 188/220  consumed_samples: 96768  total_loss: 7.904  lm_loss: 7.206  sop_loss: 0.6947  time: 8.2090 s/iter  data_time: 0.0165 s/iter total_throughput: 62.37 samples/s lr: N/A  
+[04/03 07:40:55 lb.utils.events]:  eta: 0:04:06  iteration: 189/220  consumed_samples: 97280  total_loss: 7.904  lm_loss: 7.206  sop_loss: 0.6948  time: 8.2090 s/iter  data_time: 0.0163 s/iter total_throughput: 62.37 samples/s lr: N/A  
+[04/03 07:41:03 lb.utils.events]:  eta: 0:03:58  iteration: 190/220  consumed_samples: 97792  total_loss: 7.903  lm_loss: 7.205  sop_loss: 0.6947  time: 8.2097 s/iter  data_time: 0.0164 s/iter total_throughput: 62.37 samples/s lr: N/A  
+[04/03 07:41:11 lb.utils.events]:  eta: 0:03:50  iteration: 191/220  consumed_samples: 98304  total_loss: 7.903  lm_loss: 7.205  sop_loss: 0.6947  time: 8.2089 s/iter  data_time: 0.0167 s/iter total_throughput: 62.37 samples/s lr: N/A  
+[04/03 07:41:19 lb.utils.events]:  eta: 0:03:41  iteration: 192/220  consumed_samples: 98816  total_loss: 7.903  lm_loss: 7.205  sop_loss: 0.6947  time: 8.2092 s/iter  data_time: 0.0167 s/iter total_throughput: 62.37 samples/s lr: N/A  
+[04/03 07:41:27 lb.utils.events]:  eta: 0:03:33  iteration: 193/220  consumed_samples: 99328  total_loss: 7.903  lm_loss: 7.205  sop_loss: 0.6947  time: 8.2088 s/iter  data_time: 0.0165 s/iter total_throughput: 62.37 samples/s lr: N/A  
+[04/03 07:41:36 lb.utils.events]:  eta: 0:03:25  iteration: 194/220  consumed_samples: 99840  total_loss: 7.903  lm_loss: 7.205  sop_loss: 0.6946  time: 8.2093 s/iter  data_time: 0.0166 s/iter total_throughput: 62.37 samples/s lr: N/A  
+[04/03 07:41:44 lb.utils.events]:  eta: 0:03:17  iteration: 195/220  consumed_samples: 100352  total_loss: 7.903  lm_loss: 7.205  sop_loss: 0.6946  time: 8.2102 s/iter  data_time: 0.0166 s/iter total_throughput: 62.36 samples/s lr: N/A  
+[04/03 07:41:52 lb.utils.events]:  eta: 0:03:09  iteration: 196/220  consumed_samples: 100864  total_loss: 7.903  lm_loss: 7.204  sop_loss: 0.6946  time: 8.2106 s/iter  data_time: 0.0167 s/iter total_throughput: 62.36 samples/s lr: N/A  
+[04/03 07:42:01 lb.utils.events]:  eta: 0:03:00  iteration: 197/220  consumed_samples: 101376  total_loss: 7.903  lm_loss: 7.204  sop_loss: 0.6946  time: 8.2105 s/iter  data_time: 0.0166 s/iter total_throughput: 62.36 samples/s lr: N/A  
+[04/03 07:42:09 lb.utils.events]:  eta: 0:02:52  iteration: 198/220  consumed_samples: 101888  total_loss: 7.903  lm_loss: 7.204  sop_loss: 0.6946  time: 8.2110 s/iter  data_time: 0.0166 s/iter total_throughput: 62.36 samples/s lr: N/A  
+[04/03 07:42:17 lb.utils.events]:  eta: 0:02:44  iteration: 199/220  consumed_samples: 102400  total_loss: 7.902  lm_loss: 7.204  sop_loss: 0.6945  time: 8.2112 s/iter  data_time: 0.0165 s/iter total_throughput: 62.35 samples/s lr: N/A  
+[04/03 07:42:26 lb.utils.events]:  eta: 0:02:36  iteration: 200/220  consumed_samples: 102912  total_loss: 7.902  lm_loss: 7.203  sop_loss: 0.6945  time: 8.2113 s/iter  data_time: 0.0164 s/iter total_throughput: 62.35 samples/s lr: N/A  
+[04/03 07:42:34 lb.utils.events]:  eta: 0:02:27  iteration: 201/220  consumed_samples: 103424  total_loss: 7.902  lm_loss: 7.203  sop_loss: 0.6944  time: 8.2109 s/iter  data_time: 0.0164 s/iter total_throughput: 62.36 samples/s lr: N/A  
+[04/03 07:42:42 lb.utils.events]:  eta: 0:02:19  iteration: 202/220  consumed_samples: 103936  total_loss: 7.901  lm_loss: 7.202  sop_loss: 0.6944  time: 8.2112 s/iter  data_time: 0.0164 s/iter total_throughput: 62.35 samples/s lr: N/A  
+[04/03 07:42:50 lb.utils.events]:  eta: 0:02:11  iteration: 203/220  consumed_samples: 104448  total_loss: 7.899  lm_loss: 7.201  sop_loss: 0.6943  time: 8.2107 s/iter  data_time: 0.0163 s/iter total_throughput: 62.36 samples/s lr: N/A  
+[04/03 07:42:58 lb.utils.events]:  eta: 0:02:03  iteration: 204/220  consumed_samples: 104960  total_loss: 7.899  lm_loss: 7.201  sop_loss: 0.6943  time: 8.2105 s/iter  data_time: 0.0165 s/iter total_throughput: 62.36 samples/s lr: N/A  
+[04/03 07:43:06 lb.utils.events]:  eta: 0:01:55  iteration: 205/220  consumed_samples: 105472  total_loss: 7.897  lm_loss: 7.201  sop_loss: 0.6943  time: 8.2102 s/iter  data_time: 0.0167 s/iter total_throughput: 62.36 samples/s lr: N/A  
+[04/03 07:43:15 lb.utils.events]:  eta: 0:01:46  iteration: 206/220  consumed_samples: 105984  total_loss: 7.897  lm_loss: 7.201  sop_loss: 0.6943  time: 8.2102 s/iter  data_time: 0.0166 s/iter total_throughput: 62.36 samples/s lr: N/A  
+[04/03 07:43:23 lb.utils.events]:  eta: 0:01:38  iteration: 207/220  consumed_samples: 106496  total_loss: 7.896  lm_loss: 7.201  sop_loss: 0.6943  time: 8.2101 s/iter  data_time: 0.0165 s/iter total_throughput: 62.36 samples/s lr: N/A  
+[04/03 07:43:31 lb.utils.events]:  eta: 0:01:30  iteration: 208/220  consumed_samples: 107008  total_loss: 7.895  lm_loss: 7.2  sop_loss: 0.6943  time: 8.2101 s/iter  data_time: 0.0167 s/iter total_throughput: 62.36 samples/s lr: N/A  
+[04/03 07:43:39 lb.utils.events]:  eta: 0:01:22  iteration: 209/220  consumed_samples: 107520  total_loss: 7.894  lm_loss: 7.2  sop_loss: 0.6943  time: 8.2102 s/iter  data_time: 0.0168 s/iter total_throughput: 62.36 samples/s lr: N/A  
+[04/03 07:43:48 lb.utils.events]:  eta: 0:01:13  iteration: 210/220  consumed_samples: 108032  total_loss: 7.894  lm_loss: 7.199  sop_loss: 0.6943  time: 8.2105 s/iter  data_time: 0.0165 s/iter total_throughput: 62.36 samples/s lr: N/A  
+[04/03 07:43:56 lb.utils.events]:  eta: 0:01:05  iteration: 211/220  consumed_samples: 108544  total_loss: 7.893  lm_loss: 7.198  sop_loss: 0.6942  time: 8.2109 s/iter  data_time: 0.0164 s/iter total_throughput: 62.36 samples/s lr: N/A  
+[04/03 07:44:04 lb.utils.events]:  eta: 0:00:57  iteration: 212/220  consumed_samples: 109056  total_loss: 7.893  lm_loss: 7.197  sop_loss: 0.6942  time: 8.2102 s/iter  data_time: 0.0164 s/iter total_throughput: 62.36 samples/s lr: N/A  
+[04/03 07:44:12 lb.utils.events]:  eta: 0:00:49  iteration: 213/220  consumed_samples: 109568  total_loss: 7.892  lm_loss: 7.197  sop_loss: 0.6942  time: 8.2099 s/iter  data_time: 0.0164 s/iter total_throughput: 62.36 samples/s lr: N/A  
+[04/03 07:44:20 lb.utils.events]:  eta: 0:00:41  iteration: 214/220  consumed_samples: 110080  total_loss: 7.892  lm_loss: 7.196  sop_loss: 0.6942  time: 8.2094 s/iter  data_time: 0.0164 s/iter total_throughput: 62.37 samples/s lr: N/A  
+[04/03 07:44:29 lb.utils.events]:  eta: 0:00:32  iteration: 215/220  consumed_samples: 110592  total_loss: 7.892  lm_loss: 7.196  sop_loss: 0.6941  time: 8.2098 s/iter  data_time: 0.0163 s/iter total_throughput: 62.36 samples/s lr: N/A  
+[04/03 07:44:37 lb.utils.events]:  eta: 0:00:24  iteration: 216/220  consumed_samples: 111104  total_loss: 7.892  lm_loss: 7.196  sop_loss: 0.6941  time: 8.2097 s/iter  data_time: 0.0163 s/iter total_throughput: 62.37 samples/s lr: N/A  
+[04/03 07:44:45 lb.utils.events]:  eta: 0:00:16  iteration: 217/220  consumed_samples: 111616  total_loss: 7.891  lm_loss: 7.196  sop_loss: 0.6941  time: 8.2103 s/iter  data_time: 0.0165 s/iter total_throughput: 62.36 samples/s lr: N/A  
+[04/03 07:44:53 lb.utils.events]:  eta: 0:00:08  iteration: 218/220  consumed_samples: 112128  total_loss: 7.89  lm_loss: 7.196  sop_loss: 0.694  time: 8.2103 s/iter  data_time: 0.0166 s/iter total_throughput: 62.36 samples/s lr: N/A  
+[04/03 07:45:02 lb.utils.events]:  eta: 0:00:00  iteration: 219/220  consumed_samples: 112640  total_loss: 7.89  lm_loss: 7.196  sop_loss: 0.694  time: 8.2104 s/iter  data_time: 0.0172 s/iter total_throughput: 62.36 samples/s lr: N/A  
+[04/03 07:45:02 lb.engine.hooks]: Overall training speed: 218 iterations in 0:29:49 (8.2104 s / it)
+[04/03 07:45:02 lb.engine.hooks]: Total training time: 0:29:52 (0:00:03 on hooks)
+*****************************************
+Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+*****************************************
+oneflow-version(git_commit)=0.9.1.dev20230330+cu117
+oneflow-commit(git_commit)=59b64db
+oneflow-libai(git_commit)=b605198931c2a2bfc705bd38b95b543f92606f47

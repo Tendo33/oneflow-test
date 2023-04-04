@@ -1,0 +1,555 @@
+[04/03 07:13:43] libai INFO: Rank of current process: 3. World size: 8
+[04/03 07:13:43] libai INFO: Command line arguments: Namespace(config_file='configs/bert_large_pretrain.py', resume=False, eval_only=False, fast_dev_run=False, opts=['model.cfg.hidden_dropout_prob=0.0', 'model.cfg.attention_probs_dropout_prob=0.0', 'model.cfg.bias_dropout_fusion=false', 'model.cfg.hidden_layers=24', 'model.cfg.hidden_size=1024', 'model.cfg.num_attention_heads=16', 'model.cfg.intermediate_size=4096', 'model.cfg.ffn_hidden_size=4096', 'model.cfg.head_size=64', 'graph.enabled=true', 'train.dist.pipeline_num_layers=24', 'train.train_micro_batch_size=32', 'train.global_batch_size=512', 'train.dist.tensor_parallel_size=2', 'train.dist.pipeline_parallel_size=2', 'train.amp.enabled=true', 'train.activation_checkpoint.enabled=true', 'train.num_accumulation_steps=8', 'train.evaluation.enabled=false', 'train.train_iter=220', 'train.train_epoch=0', 'train.log_period=1', 'train.zero_optimization.enabled=false', 'train.zero_optimization.stage=0', 'train.load_weight=test_logs/oneflow-28/NVIDIA_GeForce_RTX_3080_Ti/LibAI_bert_large_pretrain_graph_nl24_nah16_hs1024_FP16_actrue_DP2_MP2_PP2_zerofalse_stage0_mbs32_gbs512_acc8_1n8g/model_final/', 'train.output_dir=test_logs/oneflow-28/NVIDIA_GeForce_RTX_3080_Ti/59b64db/LibAI_bert_large_pretrain_graph_nl24_nah16_hs1024_FP16_actrue_DP2_MP2_PP2_zerofalse_stage0_mbs32_gbs512_acc8_1n8g'])
+[04/03 07:13:43] libai INFO: Contents of args.config_file=configs/bert_large_pretrain.py:
+[38;5;197mfrom[39m[38;5;15m [39m[38;5;15mlibai[39m[38;5;15m.[39m[38;5;15mconfig[39m[38;5;15m [39m[38;5;197mimport[39m[38;5;15m [39m[38;5;15mLazyCall[39m
+[38;5;197mfrom[39m[38;5;15m [39m[38;5;15mlibai[39m[38;5;15m.[39m[38;5;15mevaluation[39m[38;5;15m [39m[38;5;197mimport[39m[38;5;15m [39m[38;5;15mPPLEvaluator[39m
+[38;5;197mfrom[39m[38;5;15m [39m[38;5;15m.[39m[38;5;15mcommon[39m[38;5;15m.[39m[38;5;15mmodels[39m[38;5;15m.[39m[38;5;15mbert[39m[38;5;15m [39m[38;5;197mimport[39m[38;5;15m [39m[38;5;15mpretrain_model[39m[38;5;15m [39m[38;5;81mas[39m[38;5;15m [39m[38;5;15mmodel[39m
+[38;5;197mfrom[39m[38;5;15m [39m[38;5;15m.[39m[38;5;15mcommon[39m[38;5;15m.[39m[38;5;15mmodels[39m[38;5;15m.[39m[38;5;15mgraph[39m[38;5;15m [39m[38;5;197mimport[39m[38;5;15m [39m[38;5;15mgraph[39m
+[38;5;197mfrom[39m[38;5;15m [39m[38;5;15m.[39m[38;5;15mcommon[39m[38;5;15m.[39m[38;5;15mtrain[39m[38;5;15m [39m[38;5;197mimport[39m[38;5;15m [39m[38;5;15mtrain[39m
+[38;5;197mfrom[39m[38;5;15m [39m[38;5;15m.[39m[38;5;15mcommon[39m[38;5;15m.[39m[38;5;15moptim[39m[38;5;15m [39m[38;5;197mimport[39m[38;5;15m [39m[38;5;15moptim[39m
+[38;5;197mfrom[39m[38;5;15m [39m[38;5;15m.[39m[38;5;15mcommon[39m[38;5;15m.[39m[38;5;15mdata[39m[38;5;15m.[39m[38;5;15mbert_dataset[39m[38;5;15m [39m[38;5;197mimport[39m[38;5;15m [39m[38;5;15mdataloader[39m[38;5;15m,[39m[38;5;15m [39m[38;5;15mtokenization[39m
+
+[38;5;15mvocab_file[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;186m"[39m[38;5;186m./data_test/bert_data/bert-base-chinese-vocab.txt[39m[38;5;186m"[39m
+[38;5;15mdata_prefix[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;186m"[39m[38;5;186m./data_test/bert_data/loss_compara_content_sentence[39m[38;5;186m"[39m
+
+[38;5;15mtokenization[39m[38;5;197m.[39m[38;5;15mtokenizer[39m[38;5;197m.[39m[38;5;15mvocab_file[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;15mvocab_file[39m
+[38;5;15mdataloader[39m[38;5;197m.[39m[38;5;15mtrain[39m[38;5;197m.[39m[38;5;15mdataset[39m[38;5;15m[[39m[38;5;141m0[39m[38;5;15m][39m[38;5;197m.[39m[38;5;15mdata_prefix[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;15mdata_prefix[39m
+[38;5;15mdataloader[39m[38;5;197m.[39m[38;5;15mtrain[39m[38;5;197m.[39m[38;5;15mdataset[39m[38;5;15m[[39m[38;5;141m0[39m[38;5;15m][39m[38;5;197m.[39m[38;5;15mindexed_dataset[39m[38;5;197m.[39m[38;5;15mdata_prefix[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;15mdata_prefix[39m
+[38;5;15mdataloader[39m[38;5;197m.[39m[38;5;15mtest[39m[38;5;15m[[39m[38;5;141m0[39m[38;5;15m][39m[38;5;197m.[39m[38;5;15mdataset[39m[38;5;197m.[39m[38;5;15mdata_prefix[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;15mdata_prefix[39m
+[38;5;15mdataloader[39m[38;5;197m.[39m[38;5;15mtest[39m[38;5;15m[[39m[38;5;141m0[39m[38;5;15m][39m[38;5;197m.[39m[38;5;15mdataset[39m[38;5;197m.[39m[38;5;15mindexed_dataset[39m[38;5;197m.[39m[38;5;15mdata_prefix[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;15mdata_prefix[39m
+
+[38;5;15mgraph[39m[38;5;197m.[39m[38;5;15mdebug[39m[38;5;197m=[39m[38;5;141m0[39m
+
+[38;5;242m# Bert-large model config[39m
+[38;5;15mmodel[39m[38;5;197m.[39m[38;5;15mcfg[39m[38;5;197m.[39m[38;5;15mnum_attention_heads[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;141m16[39m
+[38;5;15mmodel[39m[38;5;197m.[39m[38;5;15mcfg[39m[38;5;197m.[39m[38;5;15mhidden_size[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;141m768[39m
+[38;5;15mmodel[39m[38;5;197m.[39m[38;5;15mcfg[39m[38;5;197m.[39m[38;5;15mhidden_layers[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;141m8[39m
+
+[38;5;15mtrain[39m[38;5;197m.[39m[38;5;15minput_placement_device[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;186m"[39m[38;5;186mcpu[39m[38;5;186m"[39m
+
+[38;5;15mtrain[39m[38;5;197m.[39m[38;5;15mdist[39m[38;5;197m.[39m[38;5;15mpipeline_num_layers[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;15mmodel[39m[38;5;197m.[39m[38;5;15mcfg[39m[38;5;197m.[39m[38;5;15mhidden_layers[39m
+
+[38;5;15mtrain[39m[38;5;197m.[39m[38;5;15mtrain_micro_batch_size[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;141m16[39m
+
+[38;5;15mtrain[39m[38;5;197m.[39m[38;5;15mamp[39m[38;5;197m.[39m[38;5;15menabled[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;81mTrue[39m
+
+[38;5;81mfor[39m[38;5;15m [39m[38;5;15mds[39m[38;5;15m [39m[38;5;197min[39m[38;5;15m [39m[38;5;15mdataloader[39m[38;5;197m.[39m[38;5;15mtrain[39m[38;5;197m.[39m[38;5;15mdataset[39m[38;5;15m:[39m
+[38;5;15m    [39m[38;5;15mds[39m[38;5;197m.[39m[38;5;15mmax_seq_length[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;15mmodel[39m[38;5;197m.[39m[38;5;15mcfg[39m[38;5;197m.[39m[38;5;15mmax_position_embeddings[39m
+
+[38;5;15mtrain[39m[38;5;197m.[39m[38;5;15mevaluation[39m[38;5;197m.[39m[38;5;15mevaluator[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;15mLazyCall[39m[38;5;15m([39m[38;5;15mPPLEvaluator[39m[38;5;15m)[39m[38;5;15m([39m[38;5;15m)[39m
+
+[38;5;15mtrain[39m[38;5;197m.[39m[38;5;15moutput_dir[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;186m"[39m[38;5;186moutput/bert_output[39m[38;5;186m"[39m
+
+[04/03 07:13:43] libai.engine.default INFO: Prepare training, validating, testing set
+[04/03 07:13:43] libai.data.data_utils.indexed_dataset INFO: building dataset index ...
+[04/03 07:13:43] libai.data.data_utils.indexed_dataset INFO: warming up index mmap file...
+[04/03 07:13:43] libai.data.data_utils.indexed_dataset INFO: reading sizes...
+[04/03 07:13:43] libai.data.data_utils.indexed_dataset INFO: reading pointers...
+[04/03 07:13:43] libai.data.data_utils.indexed_dataset INFO: reading document index...
+[04/03 07:13:43] libai.data.data_utils.indexed_dataset INFO: warming up data mmap file...
+[04/03 07:13:43] libai.data.data_utils.indexed_dataset INFO: creating numpy buffer of mmap...
+[04/03 07:13:43] libai.data.data_utils.indexed_dataset INFO: creating memory view of numpy buffer...
+[04/03 07:13:43] libai.data.data_utils.indexed_dataset INFO: Finished creating indexed dataset in 0.116278 seconds
+[04/03 07:13:43] libai.data.data_utils.indexed_dataset INFO: indexed dataset stats:
+[04/03 07:13:43] libai.data.data_utils.indexed_dataset INFO: number of documents: 50000
+[04/03 07:13:43] libai.data.data_utils.indexed_dataset INFO: number of sentences: 1249934
+[04/03 07:13:43] libai.data.data_utils.dataset_utils INFO:  > loading indexed mapping from ./data_test/bert_data/loss_compara_content_sentence_bert_indexmap_112640mns_509msl_0.10ssp_1234s.npy
+[04/03 07:13:43] libai.data.data_utils.dataset_utils INFO:     loaded indexed file in 0.003 seconds
+[04/03 07:13:43] libai.data.data_utils.dataset_utils INFO:     total number of samples: 113036
+[04/03 07:13:43] libai.data.data_utils.dataset_utils INFO:  > loading indexed mapping from ./data_test/bert_data/loss_compara_content_sentence_bert_indexmap_64mns_509msl_0.10ssp_1234s.npy
+[04/03 07:13:43] libai.data.data_utils.dataset_utils INFO:     loaded indexed file in 0.001 seconds
+[04/03 07:13:43] libai.data.data_utils.dataset_utils INFO:     total number of samples: 5884
+[04/03 07:13:43] libai.data.data_utils.dataset_utils INFO:  > loading indexed mapping from ./data_test/bert_data/loss_compara_content_sentence_bert_indexmap_64mns_509msl_0.10ssp_1234s.npy
+[04/03 07:13:43] libai.data.data_utils.dataset_utils INFO:     loaded indexed file in 0.001 seconds
+[04/03 07:13:43] libai.data.data_utils.dataset_utils INFO:     total number of samples: 5884
+[04/03 07:13:43] libai.engine.default INFO: Prepare testing set
+[04/03 07:13:43] libai.data.data_utils.indexed_dataset INFO: building dataset index ...
+[04/03 07:13:43] libai.data.data_utils.indexed_dataset INFO: warming up index mmap file...
+[04/03 07:13:43] libai.data.data_utils.indexed_dataset INFO: reading sizes...
+[04/03 07:13:43] libai.data.data_utils.indexed_dataset INFO: reading pointers...
+[04/03 07:13:43] libai.data.data_utils.indexed_dataset INFO: reading document index...
+[04/03 07:13:43] libai.data.data_utils.indexed_dataset INFO: warming up data mmap file...
+[04/03 07:13:43] libai.data.data_utils.indexed_dataset INFO: creating numpy buffer of mmap...
+[04/03 07:13:43] libai.data.data_utils.indexed_dataset INFO: creating memory view of numpy buffer...
+[04/03 07:13:43] libai.data.data_utils.indexed_dataset INFO: Finished creating indexed dataset in 0.229858 seconds
+[04/03 07:13:43] libai.data.data_utils.indexed_dataset INFO: indexed dataset stats:
+[04/03 07:13:43] libai.data.data_utils.indexed_dataset INFO: number of documents: 50000
+[04/03 07:13:43] libai.data.data_utils.indexed_dataset INFO: number of sentences: 1249934
+[04/03 07:13:43] libai.data.data_utils.dataset_utils INFO:  > loading indexed mapping from ./data_test/bert_data/loss_compara_content_sentence_bert_indexmap_10mns_509msl_0.10ssp_1234s.npy
+[04/03 07:13:43] libai.data.data_utils.dataset_utils INFO:     loaded indexed file in 0.003 seconds
+[04/03 07:13:43] libai.data.data_utils.dataset_utils INFO:     total number of samples: 119037
+[04/03 07:13:53] libai.engine.default INFO: Auto-scaling the config to train.train_iter=220, train.warmup_iter=0
+[04/03 07:13:53] libai INFO: > Start building model...
+[04/03 07:13:57] libai.engine.default INFO: Model:
+BertForPreTraining(
+  (bert): BertModel(
+    (embeddings): BertEmbeddings(
+      (vocab_embeddings): VocabEmbedding(num_embeddings=21248, embedding_dim=1024)
+      (position_embeddings): Embedding(num_embeddings=512, embedding_dim=1024)
+      (tokentype_embeddings): Embedding(num_embeddings=2, embedding_dim=1024)
+      (embedding_dropout): Dropout(p=0.0, inplace=False)
+    )
+    (extended_attn_mask): BertExtendedAttnMask()
+    (encoders): ModuleList(
+      (0): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (1): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (2): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (3): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (4): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (5): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (6): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (7): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (8): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (9): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (10): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (11): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (12): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (13): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (14): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (15): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (16): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (17): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (18): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (19): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (20): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (21): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (22): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (23): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+    )
+    (final_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+    (pooler): BertPooler(
+      (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=col)
+      (activation_func): Tanh()
+    )
+  )
+  (cls_head): BertPreTrainingHeads(
+    (predictions): BertLMPredictionHead(
+      (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=data)
+      (activation_func): GELU()
+      (layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+    )
+    (seq_relationship): Linear1D(in_features=1024, out_features=2, bias=True, parallel=data)
+    (lm_logits): LMLogits()
+    (loss_func): BertLoss(
+      (lm_loss): ParallelCrossEntropyLoss()
+    )
+  )
+)
+[04/03 07:13:57] libai INFO: >>> done with building model. Building time: 3.983 seconds
+[04/03 07:13:57] libai.scheduler.lr_scheduler WARNING: warmup iters equals to zero, return CosineLR
+[04/03 07:13:57] libai.engine.default INFO: Graph debug mode on, automatically output debug info.
+[04/03 07:13:57] libai.engine.default INFO: Graph debug mode on, automatically output debug info.
+[04/03 07:13:57] libai.utils.checkpoint INFO: Loading checkpoint from test_logs/oneflow-28/NVIDIA_GeForce_RTX_3080_Ti/LibAI_bert_large_pretrain_graph_nl24_nah16_hs1024_FP16_actrue_DP2_MP2_PP2_zerofalse_stage0_mbs32_gbs512_acc8_1n8g/model_final/
+[04/03 07:14:02] libai.utils.checkpoint INFO: iter info in test_logs/oneflow-28/NVIDIA_GeForce_RTX_3080_Ti/LibAI_bert_large_pretrain_graph_nl24_nah16_hs1024_FP16_actrue_DP2_MP2_PP2_zerofalse_stage0_mbs32_gbs512_acc8_1n8g/model_final/ not found, set iter to 0
+[04/03 07:14:02] libai.engine.trainer INFO: Starting training from iteration 0
+[04/03 07:14:05] libai.models.utils.graph_base INFO: Start compiling the train graph which may take some time. Please wait for a moment ...
+[04/03 07:44:53] libai.engine.hooks INFO: Overall training speed: 218 iterations in 0:29:52 (8.2213 s / it)
+[04/03 07:44:53] libai.engine.hooks INFO: Total training time: 0:29:53 (0:00:00 on hooks)

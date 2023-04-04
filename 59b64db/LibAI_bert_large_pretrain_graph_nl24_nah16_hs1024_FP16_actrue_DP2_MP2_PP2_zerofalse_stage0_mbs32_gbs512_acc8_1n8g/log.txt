@@ -1,0 +1,779 @@
+[04/03 08:54:30] libai INFO: Rank of current process: 0. World size: 8
+[04/03 08:54:30] libai INFO: Command line arguments: Namespace(config_file='configs/bert_large_pretrain.py', resume=False, eval_only=False, fast_dev_run=False, opts=['model.cfg.hidden_dropout_prob=0.0', 'model.cfg.attention_probs_dropout_prob=0.0', 'model.cfg.bias_dropout_fusion=false', 'model.cfg.hidden_layers=24', 'model.cfg.hidden_size=1024', 'model.cfg.num_attention_heads=16', 'model.cfg.intermediate_size=4096', 'model.cfg.ffn_hidden_size=4096', 'model.cfg.head_size=64', 'graph.enabled=true', 'train.dist.pipeline_num_layers=24', 'train.train_micro_batch_size=32', 'train.global_batch_size=512', 'train.dist.tensor_parallel_size=2', 'train.dist.pipeline_parallel_size=2', 'train.amp.enabled=true', 'train.activation_checkpoint.enabled=true', 'train.num_accumulation_steps=8', 'train.evaluation.enabled=false', 'train.train_iter=220', 'train.train_epoch=0', 'train.log_period=1', 'train.zero_optimization.enabled=false', 'train.zero_optimization.stage=0', 'train.load_weight=test_logs/oneflow-28/NVIDIA_GeForce_RTX_3080_Ti/LibAI_bert_large_pretrain_graph_nl24_nah16_hs1024_FP16_actrue_DP2_MP2_PP2_zerofalse_stage0_mbs32_gbs512_acc8_1n8g/model_final/', 'train.output_dir=test_logs/oneflow-28/NVIDIA_GeForce_RTX_3080_Ti/59b64db/LibAI_bert_large_pretrain_graph_nl24_nah16_hs1024_FP16_actrue_DP2_MP2_PP2_zerofalse_stage0_mbs32_gbs512_acc8_1n8g'])
+[04/03 08:54:30] libai INFO: Contents of args.config_file=configs/bert_large_pretrain.py:
+[38;5;197mfrom[39m[38;5;15m [39m[38;5;15mlibai[39m[38;5;15m.[39m[38;5;15mconfig[39m[38;5;15m [39m[38;5;197mimport[39m[38;5;15m [39m[38;5;15mLazyCall[39m
+[38;5;197mfrom[39m[38;5;15m [39m[38;5;15mlibai[39m[38;5;15m.[39m[38;5;15mevaluation[39m[38;5;15m [39m[38;5;197mimport[39m[38;5;15m [39m[38;5;15mPPLEvaluator[39m
+[38;5;197mfrom[39m[38;5;15m [39m[38;5;15m.[39m[38;5;15mcommon[39m[38;5;15m.[39m[38;5;15mmodels[39m[38;5;15m.[39m[38;5;15mbert[39m[38;5;15m [39m[38;5;197mimport[39m[38;5;15m [39m[38;5;15mpretrain_model[39m[38;5;15m [39m[38;5;81mas[39m[38;5;15m [39m[38;5;15mmodel[39m
+[38;5;197mfrom[39m[38;5;15m [39m[38;5;15m.[39m[38;5;15mcommon[39m[38;5;15m.[39m[38;5;15mmodels[39m[38;5;15m.[39m[38;5;15mgraph[39m[38;5;15m [39m[38;5;197mimport[39m[38;5;15m [39m[38;5;15mgraph[39m
+[38;5;197mfrom[39m[38;5;15m [39m[38;5;15m.[39m[38;5;15mcommon[39m[38;5;15m.[39m[38;5;15mtrain[39m[38;5;15m [39m[38;5;197mimport[39m[38;5;15m [39m[38;5;15mtrain[39m
+[38;5;197mfrom[39m[38;5;15m [39m[38;5;15m.[39m[38;5;15mcommon[39m[38;5;15m.[39m[38;5;15moptim[39m[38;5;15m [39m[38;5;197mimport[39m[38;5;15m [39m[38;5;15moptim[39m
+[38;5;197mfrom[39m[38;5;15m [39m[38;5;15m.[39m[38;5;15mcommon[39m[38;5;15m.[39m[38;5;15mdata[39m[38;5;15m.[39m[38;5;15mbert_dataset[39m[38;5;15m [39m[38;5;197mimport[39m[38;5;15m [39m[38;5;15mdataloader[39m[38;5;15m,[39m[38;5;15m [39m[38;5;15mtokenization[39m
+
+[38;5;15mvocab_file[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;186m"[39m[38;5;186m./data_test/bert_data/bert-base-chinese-vocab.txt[39m[38;5;186m"[39m
+[38;5;15mdata_prefix[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;186m"[39m[38;5;186m./data_test/bert_data/loss_compara_content_sentence[39m[38;5;186m"[39m
+
+[38;5;15mtokenization[39m[38;5;197m.[39m[38;5;15mtokenizer[39m[38;5;197m.[39m[38;5;15mvocab_file[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;15mvocab_file[39m
+[38;5;15mdataloader[39m[38;5;197m.[39m[38;5;15mtrain[39m[38;5;197m.[39m[38;5;15mdataset[39m[38;5;15m[[39m[38;5;141m0[39m[38;5;15m][39m[38;5;197m.[39m[38;5;15mdata_prefix[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;15mdata_prefix[39m
+[38;5;15mdataloader[39m[38;5;197m.[39m[38;5;15mtrain[39m[38;5;197m.[39m[38;5;15mdataset[39m[38;5;15m[[39m[38;5;141m0[39m[38;5;15m][39m[38;5;197m.[39m[38;5;15mindexed_dataset[39m[38;5;197m.[39m[38;5;15mdata_prefix[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;15mdata_prefix[39m
+[38;5;15mdataloader[39m[38;5;197m.[39m[38;5;15mtest[39m[38;5;15m[[39m[38;5;141m0[39m[38;5;15m][39m[38;5;197m.[39m[38;5;15mdataset[39m[38;5;197m.[39m[38;5;15mdata_prefix[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;15mdata_prefix[39m
+[38;5;15mdataloader[39m[38;5;197m.[39m[38;5;15mtest[39m[38;5;15m[[39m[38;5;141m0[39m[38;5;15m][39m[38;5;197m.[39m[38;5;15mdataset[39m[38;5;197m.[39m[38;5;15mindexed_dataset[39m[38;5;197m.[39m[38;5;15mdata_prefix[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;15mdata_prefix[39m
+
+[38;5;15mgraph[39m[38;5;197m.[39m[38;5;15mdebug[39m[38;5;197m=[39m[38;5;141m0[39m
+
+[38;5;242m# Bert-large model config[39m
+[38;5;15mmodel[39m[38;5;197m.[39m[38;5;15mcfg[39m[38;5;197m.[39m[38;5;15mnum_attention_heads[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;141m16[39m
+[38;5;15mmodel[39m[38;5;197m.[39m[38;5;15mcfg[39m[38;5;197m.[39m[38;5;15mhidden_size[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;141m768[39m
+[38;5;15mmodel[39m[38;5;197m.[39m[38;5;15mcfg[39m[38;5;197m.[39m[38;5;15mhidden_layers[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;141m8[39m
+
+[38;5;15mtrain[39m[38;5;197m.[39m[38;5;15minput_placement_device[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;186m"[39m[38;5;186mcpu[39m[38;5;186m"[39m
+
+[38;5;15mtrain[39m[38;5;197m.[39m[38;5;15mdist[39m[38;5;197m.[39m[38;5;15mpipeline_num_layers[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;15mmodel[39m[38;5;197m.[39m[38;5;15mcfg[39m[38;5;197m.[39m[38;5;15mhidden_layers[39m
+
+[38;5;15mtrain[39m[38;5;197m.[39m[38;5;15mtrain_micro_batch_size[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;141m16[39m
+
+[38;5;15mtrain[39m[38;5;197m.[39m[38;5;15mamp[39m[38;5;197m.[39m[38;5;15menabled[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;81mTrue[39m
+
+[38;5;81mfor[39m[38;5;15m [39m[38;5;15mds[39m[38;5;15m [39m[38;5;197min[39m[38;5;15m [39m[38;5;15mdataloader[39m[38;5;197m.[39m[38;5;15mtrain[39m[38;5;197m.[39m[38;5;15mdataset[39m[38;5;15m:[39m
+[38;5;15m    [39m[38;5;15mds[39m[38;5;197m.[39m[38;5;15mmax_seq_length[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;15mmodel[39m[38;5;197m.[39m[38;5;15mcfg[39m[38;5;197m.[39m[38;5;15mmax_position_embeddings[39m
+
+[38;5;15mtrain[39m[38;5;197m.[39m[38;5;15mevaluation[39m[38;5;197m.[39m[38;5;15mevaluator[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;15mLazyCall[39m[38;5;15m([39m[38;5;15mPPLEvaluator[39m[38;5;15m)[39m[38;5;15m([39m[38;5;15m)[39m
+
+[38;5;15mtrain[39m[38;5;197m.[39m[38;5;15moutput_dir[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;186m"[39m[38;5;186moutput/bert_output[39m[38;5;186m"[39m
+
+[04/03 08:54:30] libai INFO: Full config saved to test_logs/oneflow-28/NVIDIA_GeForce_RTX_3080_Ti/59b64db/LibAI_bert_large_pretrain_graph_nl24_nah16_hs1024_FP16_actrue_DP2_MP2_PP2_zerofalse_stage0_mbs32_gbs512_acc8_1n8g/config.yaml
+[04/03 08:54:30] lb.engine.default INFO: > compiling dataset index builder ...
+[04/03 08:54:30] lb.engine.default INFO: >>> done with dataset index builder. Compilation time: 0.041 seconds
+[04/03 08:54:30] lb.engine.default INFO: >>> done with compiling. Compilation time: 0.042 seconds
+[04/03 08:54:30] lb.engine.default INFO: Prepare training, validating, testing set
+[04/03 08:54:30] lb.data.data_utils.indexed_dataset INFO: building dataset index ...
+[04/03 08:54:30] lb.data.data_utils.indexed_dataset INFO: warming up index mmap file...
+[04/03 08:54:30] lb.data.data_utils.indexed_dataset INFO: reading sizes...
+[04/03 08:54:30] lb.data.data_utils.indexed_dataset INFO: reading pointers...
+[04/03 08:54:30] lb.data.data_utils.indexed_dataset INFO: reading document index...
+[04/03 08:54:30] lb.data.data_utils.indexed_dataset INFO: warming up data mmap file...
+[04/03 08:54:30] lb.data.data_utils.indexed_dataset INFO: creating numpy buffer of mmap...
+[04/03 08:54:30] lb.data.data_utils.indexed_dataset INFO: creating memory view of numpy buffer...
+[04/03 08:54:30] lb.data.data_utils.indexed_dataset INFO: Finished creating indexed dataset in 0.120358 seconds
+[04/03 08:54:30] lb.data.data_utils.indexed_dataset INFO: indexed dataset stats:
+[04/03 08:54:30] lb.data.data_utils.indexed_dataset INFO: number of documents: 50000
+[04/03 08:54:30] lb.data.data_utils.indexed_dataset INFO: number of sentences: 1249934
+[04/03 08:54:30] lb.data.data_utils.dataset_utils INFO:  > loading indexed mapping from ./data_test/bert_data/loss_compara_content_sentence_bert_indexmap_112640mns_509msl_0.10ssp_1234s.npy
+[04/03 08:54:30] lb.data.data_utils.dataset_utils INFO:     loaded indexed file in 0.003 seconds
+[04/03 08:54:30] lb.data.data_utils.dataset_utils INFO:     total number of samples: 113036
+[04/03 08:54:30] lb.data.data_utils.dataset_utils INFO:  > loading indexed mapping from ./data_test/bert_data/loss_compara_content_sentence_bert_indexmap_64mns_509msl_0.10ssp_1234s.npy
+[04/03 08:54:30] lb.data.data_utils.dataset_utils INFO:     loaded indexed file in 0.001 seconds
+[04/03 08:54:30] lb.data.data_utils.dataset_utils INFO:     total number of samples: 5884
+[04/03 08:54:30] lb.data.data_utils.dataset_utils INFO:  > loading indexed mapping from ./data_test/bert_data/loss_compara_content_sentence_bert_indexmap_64mns_509msl_0.10ssp_1234s.npy
+[04/03 08:54:30] lb.data.data_utils.dataset_utils INFO:     loaded indexed file in 0.001 seconds
+[04/03 08:54:30] lb.data.data_utils.dataset_utils INFO:     total number of samples: 5884
+[04/03 08:54:31] lb.engine.default INFO: Prepare testing set
+[04/03 08:54:31] lb.data.data_utils.indexed_dataset INFO: building dataset index ...
+[04/03 08:54:31] lb.data.data_utils.indexed_dataset INFO: warming up index mmap file...
+[04/03 08:54:31] lb.data.data_utils.indexed_dataset INFO: reading sizes...
+[04/03 08:54:31] lb.data.data_utils.indexed_dataset INFO: reading pointers...
+[04/03 08:54:31] lb.data.data_utils.indexed_dataset INFO: reading document index...
+[04/03 08:54:31] lb.data.data_utils.indexed_dataset INFO: warming up data mmap file...
+[04/03 08:54:31] lb.data.data_utils.indexed_dataset INFO: creating numpy buffer of mmap...
+[04/03 08:54:31] lb.data.data_utils.indexed_dataset INFO: creating memory view of numpy buffer...
+[04/03 08:54:31] lb.data.data_utils.indexed_dataset INFO: Finished creating indexed dataset in 0.159751 seconds
+[04/03 08:54:31] lb.data.data_utils.indexed_dataset INFO: indexed dataset stats:
+[04/03 08:54:31] lb.data.data_utils.indexed_dataset INFO: number of documents: 50000
+[04/03 08:54:31] lb.data.data_utils.indexed_dataset INFO: number of sentences: 1249934
+[04/03 08:54:31] lb.data.data_utils.dataset_utils INFO:  > loading indexed mapping from ./data_test/bert_data/loss_compara_content_sentence_bert_indexmap_10mns_509msl_0.10ssp_1234s.npy
+[04/03 08:54:31] lb.data.data_utils.dataset_utils INFO:     loaded indexed file in 0.003 seconds
+[04/03 08:54:31] lb.data.data_utils.dataset_utils INFO:     total number of samples: 119037
+[04/03 08:54:41] lb.engine.default INFO: Auto-scaling the config to train.train_iter=220, train.warmup_iter=0
+[04/03 08:54:41] libai INFO: > Start building model...
+[04/03 08:54:45] lb.engine.default INFO: Model:
+BertForPreTraining(
+  (bert): BertModel(
+    (embeddings): BertEmbeddings(
+      (vocab_embeddings): VocabEmbedding(num_embeddings=21248, embedding_dim=1024)
+      (position_embeddings): Embedding(num_embeddings=512, embedding_dim=1024)
+      (tokentype_embeddings): Embedding(num_embeddings=2, embedding_dim=1024)
+      (embedding_dropout): Dropout(p=0.0, inplace=False)
+    )
+    (extended_attn_mask): BertExtendedAttnMask()
+    (encoders): ModuleList(
+      (0): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (1): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (2): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (3): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (4): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (5): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (6): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (7): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (8): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (9): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (10): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (11): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (12): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (13): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (14): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (15): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (16): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (17): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (18): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (19): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (20): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (21): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (22): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (23): TransformerLayer(
+        (drop_path): Identity()
+        (input_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          hidden_size=1024, num_heads=16, is_cross_attention=False
+          (dropout): Dropout(p=0.0, inplace=False)
+          (output_dropout): Dropout(p=0.0, inplace=False)
+          (query_key_value): Linear1D(in_features=1024, out_features=3072, bias=True, parallel=col)
+          (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=row)
+        )
+        (post_attention_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+        (mlp): MLP(
+          bias_gelu_fusion=True, bias_dropout_fusion=False, dropout=0.0
+          (dense_h_to_4h): Linear1D(in_features=1024, out_features=4096, bias=True, parallel=col)
+          (dense_4h_to_h): Linear1D(in_features=4096, out_features=1024, bias=True, parallel=row)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+    )
+    (final_layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+    (pooler): BertPooler(
+      (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=col)
+      (activation_func): Tanh()
+    )
+  )
+  (cls_head): BertPreTrainingHeads(
+    (predictions): BertLMPredictionHead(
+      (dense): Linear1D(in_features=1024, out_features=1024, bias=True, parallel=data)
+      (activation_func): GELU()
+      (layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+    )
+    (seq_relationship): Linear1D(in_features=1024, out_features=2, bias=True, parallel=data)
+    (lm_logits): LMLogits()
+    (loss_func): BertLoss(
+      (lm_loss): ParallelCrossEntropyLoss()
+    )
+  )
+)
+[04/03 08:54:45] libai INFO: >>> done with building model. Building time: 3.974 seconds
+[04/03 08:54:45] lb.scheduler.lr_scheduler WARNING: warmup iters equals to zero, return CosineLR
+[04/03 08:54:45] lb.engine.default INFO: Graph debug mode on, automatically output debug info.
+[04/03 08:54:45] lb.engine.default INFO: Graph debug mode on, automatically output debug info.
+[04/03 08:54:45] lb.utils.checkpoint INFO: Loading checkpoint from test_logs/oneflow-28/NVIDIA_GeForce_RTX_3080_Ti/LibAI_bert_large_pretrain_graph_nl24_nah16_hs1024_FP16_actrue_DP2_MP2_PP2_zerofalse_stage0_mbs32_gbs512_acc8_1n8g/model_final/
+[04/03 08:54:50] lb.utils.checkpoint INFO: iter info in test_logs/oneflow-28/NVIDIA_GeForce_RTX_3080_Ti/LibAI_bert_large_pretrain_graph_nl24_nah16_hs1024_FP16_actrue_DP2_MP2_PP2_zerofalse_stage0_mbs32_gbs512_acc8_1n8g/model_final/ not found, set iter to 0
+[04/03 08:54:50] lb.engine.trainer INFO: Starting training from iteration 0
+[04/03 08:54:54] lb.models.utils.graph_base INFO: Start compiling the train graph which may take some time. Please wait for a moment ...
+[04/03 08:55:38] lb.utils.events INFO:  iteration: 0/220  consumed_samples: 512  total_loss: 10.87  lm_loss: 10.13  sop_loss: 0.7448  data_time: 0.0934 s/iter  lr: N/A  
+[04/03 08:55:46] lb.utils.events INFO:  eta: 0:30:30  iteration: 1/220  consumed_samples: 1024  total_loss: 10.86  lm_loss: 10.13  sop_loss: 0.7383  data_time: 0.0580 s/iter  lr: N/A  
+[04/03 08:55:55] lb.utils.events INFO:  eta: 0:29:56  iteration: 2/220  consumed_samples: 1536  total_loss: 10.86  lm_loss: 10.13  sop_loss: 0.7318  time: 8.2796 s/iter  data_time: 0.0457 s/iter total_throughput: 61.84 samples/s lr: N/A  
+[04/03 08:56:03] lb.utils.events INFO:  eta: 0:29:43  iteration: 3/220  consumed_samples: 2048  total_loss: 10.86  lm_loss: 10.13  sop_loss: 0.7383  time: 8.2558 s/iter  data_time: 0.0388 s/iter total_throughput: 62.02 samples/s lr: N/A  
+[04/03 08:56:11] lb.utils.events INFO:  eta: 0:29:40  iteration: 4/220  consumed_samples: 2560  total_loss: 10.87  lm_loss: 10.13  sop_loss: 0.7448  time: 8.2649 s/iter  data_time: 0.0356 s/iter total_throughput: 61.95 samples/s lr: N/A  
+[04/03 08:56:19] lb.utils.events INFO:  eta: 0:29:26  iteration: 5/220  consumed_samples: 3072  total_loss: 11.91  lm_loss: 9.963  sop_loss: 1.953  time: 8.2495 s/iter  data_time: 0.0330 s/iter total_throughput: 62.06 samples/s lr: N/A  
+[04/03 08:56:28] lb.utils.events INFO:  eta: 0:29:23  iteration: 6/220  consumed_samples: 3584  total_loss: 12.92  lm_loss: 9.8  sop_loss: 3.16  time: 8.2653 s/iter  data_time: 0.0312 s/iter total_throughput: 61.95 samples/s lr: N/A  
+[04/03 08:56:36] lb.utils.events INFO:  eta: 0:29:15  iteration: 7/220  consumed_samples: 4096  total_loss: 11.9  lm_loss: 9.793  sop_loss: 2.014  time: 8.2819 s/iter  data_time: 0.0297 s/iter total_throughput: 61.82 samples/s lr: N/A  
+[04/03 08:56:44] lb.utils.events INFO:  eta: 0:29:06  iteration: 8/220  consumed_samples: 4608  total_loss: 10.87  lm_loss: 9.786  sop_loss: 1.091  time: 8.2745 s/iter  data_time: 0.0283 s/iter total_throughput: 61.88 samples/s lr: N/A  
+[04/03 08:56:53] lb.utils.events INFO:  eta: 0:28:59  iteration: 9/220  consumed_samples: 5120  total_loss: 10.86  lm_loss: 9.782  sop_loss: 1.052  time: 8.2879 s/iter  data_time: 0.0273 s/iter total_throughput: 61.78 samples/s lr: N/A  
+[04/03 08:57:01] lb.utils.events INFO:  eta: 0:28:51  iteration: 10/220  consumed_samples: 5632  total_loss: 10.86  lm_loss: 9.778  sop_loss: 1.014  time: 8.2994 s/iter  data_time: 0.0268 s/iter total_throughput: 61.69 samples/s lr: N/A  
+[04/03 08:57:09] lb.utils.events INFO:  eta: 0:28:42  iteration: 11/220  consumed_samples: 6144  total_loss: 10.85  lm_loss: 9.69  sop_loss: 0.9403  time: 8.2905 s/iter  data_time: 0.0266 s/iter total_throughput: 61.76 samples/s lr: N/A  
+[04/03 08:57:18] lb.utils.events INFO:  eta: 0:28:34  iteration: 12/220  consumed_samples: 6656  total_loss: 10.85  lm_loss: 9.602  sop_loss: 0.8668  time: 8.2927 s/iter  data_time: 0.0261 s/iter total_throughput: 61.74 samples/s lr: N/A  
+[04/03 08:57:26] lb.utils.events INFO:  eta: 0:28:25  iteration: 13/220  consumed_samples: 7168  total_loss: 10.54  lm_loss: 9.453  sop_loss: 0.8394  time: 8.2838 s/iter  data_time: 0.0257 s/iter total_throughput: 61.81 samples/s lr: N/A  
+[04/03 08:57:34] lb.utils.events INFO:  eta: 0:28:17  iteration: 14/220  consumed_samples: 7680  total_loss: 10.24  lm_loss: 9.304  sop_loss: 0.8119  time: 8.2730 s/iter  data_time: 0.0254 s/iter total_throughput: 61.89 samples/s lr: N/A  
+[04/03 08:57:42] lb.utils.events INFO:  eta: 0:28:04  iteration: 15/220  consumed_samples: 8192  total_loss: 10.2  lm_loss: 9.225  sop_loss: 0.7879  time: 8.2671 s/iter  data_time: 0.0249 s/iter total_throughput: 61.93 samples/s lr: N/A  
+[04/03 08:57:50] lb.utils.events INFO:  eta: 0:27:51  iteration: 16/220  consumed_samples: 8704  total_loss: 10.17  lm_loss: 9.147  sop_loss: 0.7638  time: 8.2613 s/iter  data_time: 0.0244 s/iter total_throughput: 61.98 samples/s lr: N/A  
+[04/03 08:57:59] lb.utils.events INFO:  eta: 0:27:42  iteration: 17/220  consumed_samples: 9216  total_loss: 10.1  lm_loss: 9.084  sop_loss: 0.7637  time: 8.2487 s/iter  data_time: 0.0241 s/iter total_throughput: 62.07 samples/s lr: N/A  
+[04/03 08:58:07] lb.utils.events INFO:  eta: 0:27:34  iteration: 18/220  consumed_samples: 9728  total_loss: 10.04  lm_loss: 9.022  sop_loss: 0.7636  time: 8.2550 s/iter  data_time: 0.0239 s/iter total_throughput: 62.02 samples/s lr: N/A  
+[04/03 08:58:15] lb.utils.events INFO:  eta: 0:27:26  iteration: 19/220  consumed_samples: 10240  total_loss: 9.861  lm_loss: 8.972  sop_loss: 0.7542  time: 8.2535 s/iter  data_time: 0.0237 s/iter total_throughput: 62.03 samples/s lr: N/A  
+[04/03 08:58:23] lb.utils.events INFO:  eta: 0:27:18  iteration: 20/220  consumed_samples: 10752  total_loss: 9.686  lm_loss: 8.922  sop_loss: 0.7448  time: 8.2576 s/iter  data_time: 0.0199 s/iter total_throughput: 62.00 samples/s lr: N/A  
+[04/03 08:58:32] lb.utils.events INFO:  eta: 0:27:14  iteration: 21/220  consumed_samples: 11264  total_loss: 9.615  lm_loss: 8.863  sop_loss: 0.7431  time: 8.2593 s/iter  data_time: 0.0196 s/iter total_throughput: 61.99 samples/s lr: N/A  
+[04/03 08:58:40] lb.utils.events INFO:  eta: 0:27:11  iteration: 22/220  consumed_samples: 11776  total_loss: 9.543  lm_loss: 8.803  sop_loss: 0.7414  time: 8.2639 s/iter  data_time: 0.0195 s/iter total_throughput: 61.96 samples/s lr: N/A  
+[04/03 08:58:48] lb.utils.events INFO:  eta: 0:26:58  iteration: 23/220  consumed_samples: 12288  total_loss: 9.533  lm_loss: 8.757  sop_loss: 0.741  time: 8.2587 s/iter  data_time: 0.0194 s/iter total_throughput: 62.00 samples/s lr: N/A  
+[04/03 08:58:56] lb.utils.events INFO:  eta: 0:26:45  iteration: 24/220  consumed_samples: 12800  total_loss: 9.523  lm_loss: 8.711  sop_loss: 0.7406  time: 8.2544 s/iter  data_time: 0.0191 s/iter total_throughput: 62.03 samples/s lr: N/A  
+[04/03 08:59:05] lb.utils.events INFO:  eta: 0:26:36  iteration: 25/220  consumed_samples: 13312  total_loss: 9.436  lm_loss: 8.649  sop_loss: 0.7362  time: 8.2491 s/iter  data_time: 0.0190 s/iter total_throughput: 62.07 samples/s lr: N/A  
+[04/03 08:59:13] lb.utils.events INFO:  eta: 0:26:28  iteration: 26/220  consumed_samples: 13824  total_loss: 9.349  lm_loss: 8.586  sop_loss: 0.7318  time: 8.2438 s/iter  data_time: 0.0188 s/iter total_throughput: 62.11 samples/s lr: N/A  
+[04/03 08:59:21] lb.utils.events INFO:  eta: 0:26:20  iteration: 27/220  consumed_samples: 14336  total_loss: 9.272  lm_loss: 8.542  sop_loss: 0.7296  time: 8.2454 s/iter  data_time: 0.0189 s/iter total_throughput: 62.10 samples/s lr: N/A  
+[04/03 08:59:29] lb.utils.events INFO:  eta: 0:26:11  iteration: 28/220  consumed_samples: 14848  total_loss: 9.196  lm_loss: 8.497  sop_loss: 0.7275  time: 8.2421 s/iter  data_time: 0.0189 s/iter total_throughput: 62.12 samples/s lr: N/A  
+[04/03 08:59:37] lb.utils.events INFO:  eta: 0:26:03  iteration: 29/220  consumed_samples: 15360  total_loss: 9.143  lm_loss: 8.436  sop_loss: 0.7254  time: 8.2410 s/iter  data_time: 0.0189 s/iter total_throughput: 62.13 samples/s lr: N/A  
+[04/03 08:59:46] lb.utils.events INFO:  eta: 0:25:55  iteration: 30/220  consumed_samples: 15872  total_loss: 9.09  lm_loss: 8.374  sop_loss: 0.7233  time: 8.2414 s/iter  data_time: 0.0187 s/iter total_throughput: 62.13 samples/s lr: N/A  
+[04/03 08:59:54] lb.utils.events INFO:  eta: 0:25:47  iteration: 31/220  consumed_samples: 16384  total_loss: 9.049  lm_loss: 8.327  sop_loss: 0.7228  time: 8.2440 s/iter  data_time: 0.0184 s/iter total_throughput: 62.11 samples/s lr: N/A  
+[04/03 09:00:02] lb.utils.events INFO:  eta: 0:25:38  iteration: 32/220  consumed_samples: 16896  total_loss: 9.008  lm_loss: 8.28  sop_loss: 0.7223  time: 8.2429 s/iter  data_time: 0.0184 s/iter total_throughput: 62.11 samples/s lr: N/A  
+[04/03 09:00:10] lb.utils.events INFO:  eta: 0:25:30  iteration: 33/220  consumed_samples: 17408  total_loss: 8.975  lm_loss: 8.241  sop_loss: 0.7212  time: 8.2421 s/iter  data_time: 0.0184 s/iter total_throughput: 62.12 samples/s lr: N/A  
+[04/03 09:00:19] lb.utils.events INFO:  eta: 0:25:22  iteration: 34/220  consumed_samples: 17920  total_loss: 8.943  lm_loss: 8.202  sop_loss: 0.72  time: 8.2421 s/iter  data_time: 0.0182 s/iter total_throughput: 62.12 samples/s lr: N/A  
+[04/03 09:00:27] lb.utils.events INFO:  eta: 0:25:14  iteration: 35/220  consumed_samples: 18432  total_loss: 8.87  lm_loss: 8.147  sop_loss: 0.7178  time: 8.2417 s/iter  data_time: 0.0183 s/iter total_throughput: 62.12 samples/s lr: N/A  
+[04/03 09:00:35] lb.utils.events INFO:  eta: 0:25:05  iteration: 36/220  consumed_samples: 18944  total_loss: 8.798  lm_loss: 8.092  sop_loss: 0.7156  time: 8.2406 s/iter  data_time: 0.0184 s/iter total_throughput: 62.13 samples/s lr: N/A  
+[04/03 09:00:43] lb.utils.events INFO:  eta: 0:24:57  iteration: 37/220  consumed_samples: 19456  total_loss: 8.754  lm_loss: 8.051  sop_loss: 0.7124  time: 8.2364 s/iter  data_time: 0.0183 s/iter total_throughput: 62.16 samples/s lr: N/A  
+[04/03 09:00:52] lb.utils.events INFO:  eta: 0:24:48  iteration: 38/220  consumed_samples: 19968  total_loss: 8.71  lm_loss: 8.01  sop_loss: 0.7093  time: 8.2356 s/iter  data_time: 0.0181 s/iter total_throughput: 62.17 samples/s lr: N/A  
+[04/03 09:01:00] lb.utils.events INFO:  eta: 0:24:39  iteration: 39/220  consumed_samples: 20480  total_loss: 8.688  lm_loss: 7.976  sop_loss: 0.7074  time: 8.2339 s/iter  data_time: 0.0182 s/iter total_throughput: 62.18 samples/s lr: N/A  
+[04/03 09:01:08] lb.utils.events INFO:  eta: 0:24:30  iteration: 40/220  consumed_samples: 20992  total_loss: 8.666  lm_loss: 7.943  sop_loss: 0.7055  time: 8.2329 s/iter  data_time: 0.0182 s/iter total_throughput: 62.19 samples/s lr: N/A  
+[04/03 09:01:16] lb.utils.events INFO:  eta: 0:24:23  iteration: 41/220  consumed_samples: 21504  total_loss: 8.632  lm_loss: 7.91  sop_loss: 0.7074  time: 8.2326 s/iter  data_time: 0.0185 s/iter total_throughput: 62.19 samples/s lr: N/A  
+[04/03 09:01:24] lb.utils.events INFO:  eta: 0:24:15  iteration: 42/220  consumed_samples: 22016  total_loss: 8.597  lm_loss: 7.877  sop_loss: 0.7082  time: 8.2324 s/iter  data_time: 0.0187 s/iter total_throughput: 62.19 samples/s lr: N/A  
+[04/03 09:01:33] lb.utils.events INFO:  eta: 0:24:06  iteration: 43/220  consumed_samples: 22528  total_loss: 8.554  lm_loss: 7.845  sop_loss: 0.7068  time: 8.2294 s/iter  data_time: 0.0187 s/iter total_throughput: 62.22 samples/s lr: N/A  
+[04/03 09:01:41] lb.utils.events INFO:  eta: 0:23:57  iteration: 44/220  consumed_samples: 23040  total_loss: 8.51  lm_loss: 7.813  sop_loss: 0.7055  time: 8.2245 s/iter  data_time: 0.0189 s/iter total_throughput: 62.25 samples/s lr: N/A  
+[04/03 09:01:49] lb.utils.events INFO:  eta: 0:23:49  iteration: 45/220  consumed_samples: 23552  total_loss: 8.477  lm_loss: 7.779  sop_loss: 0.7052  time: 8.2226 s/iter  data_time: 0.0190 s/iter total_throughput: 62.27 samples/s lr: N/A  
+[04/03 09:01:57] lb.utils.events INFO:  eta: 0:23:40  iteration: 46/220  consumed_samples: 24064  total_loss: 8.444  lm_loss: 7.745  sop_loss: 0.7055  time: 8.2184 s/iter  data_time: 0.0190 s/iter total_throughput: 62.30 samples/s lr: N/A  
+[04/03 09:02:05] lb.utils.events INFO:  eta: 0:23:32  iteration: 47/220  consumed_samples: 24576  total_loss: 8.41  lm_loss: 7.708  sop_loss: 0.7052  time: 8.2193 s/iter  data_time: 0.0190 s/iter total_throughput: 62.29 samples/s lr: N/A  
+[04/03 09:02:13] lb.utils.events INFO:  eta: 0:23:25  iteration: 48/220  consumed_samples: 25088  total_loss: 8.376  lm_loss: 7.671  sop_loss: 0.7049  time: 8.2194 s/iter  data_time: 0.0191 s/iter total_throughput: 62.29 samples/s lr: N/A  
+[04/03 09:02:21] lb.utils.events INFO:  eta: 0:23:16  iteration: 49/220  consumed_samples: 25600  total_loss: 8.359  lm_loss: 7.652  sop_loss: 0.7047  time: 8.2177 s/iter  data_time: 0.0191 s/iter total_throughput: 62.30 samples/s lr: N/A  
+[04/03 09:02:30] lb.utils.events INFO:  eta: 0:23:08  iteration: 50/220  consumed_samples: 26112  total_loss: 8.343  lm_loss: 7.633  sop_loss: 0.7049  time: 8.2178 s/iter  data_time: 0.0191 s/iter total_throughput: 62.30 samples/s lr: N/A  
+[04/03 09:02:38] lb.utils.events INFO:  eta: 0:23:00  iteration: 51/220  consumed_samples: 26624  total_loss: 8.307  lm_loss: 7.607  sop_loss: 0.7047  time: 8.2176 s/iter  data_time: 0.0190 s/iter total_throughput: 62.31 samples/s lr: N/A  
+[04/03 09:02:46] lb.utils.events INFO:  eta: 0:22:52  iteration: 52/220  consumed_samples: 27136  total_loss: 8.272  lm_loss: 7.58  sop_loss: 0.7044  time: 8.2192 s/iter  data_time: 0.0190 s/iter total_throughput: 62.29 samples/s lr: N/A  
+[04/03 09:02:54] lb.utils.events INFO:  eta: 0:22:43  iteration: 53/220  consumed_samples: 27648  total_loss: 8.238  lm_loss: 7.545  sop_loss: 0.7047  time: 8.2171 s/iter  data_time: 0.0189 s/iter total_throughput: 62.31 samples/s lr: N/A  
+[04/03 09:03:03] lb.utils.events INFO:  eta: 0:22:35  iteration: 54/220  consumed_samples: 28160  total_loss: 8.204  lm_loss: 7.51  sop_loss: 0.7044  time: 8.2185 s/iter  data_time: 0.0188 s/iter total_throughput: 62.30 samples/s lr: N/A  
+[04/03 09:03:11] lb.utils.events INFO:  eta: 0:22:27  iteration: 55/220  consumed_samples: 28672  total_loss: 8.194  lm_loss: 7.5  sop_loss: 0.7039  time: 8.2178 s/iter  data_time: 0.0187 s/iter total_throughput: 62.30 samples/s lr: N/A  
+[04/03 09:03:19] lb.utils.events INFO:  eta: 0:22:19  iteration: 56/220  consumed_samples: 29184  total_loss: 8.184  lm_loss: 7.491  sop_loss: 0.7035  time: 8.2188 s/iter  data_time: 0.0186 s/iter total_throughput: 62.30 samples/s lr: N/A  
+[04/03 09:03:27] lb.utils.events INFO:  eta: 0:22:11  iteration: 57/220  consumed_samples: 29696  total_loss: 8.157  lm_loss: 7.463  sop_loss: 0.7032  time: 8.2190 s/iter  data_time: 0.0185 s/iter total_throughput: 62.29 samples/s lr: N/A  
+[04/03 09:03:35] lb.utils.events INFO:  eta: 0:22:02  iteration: 58/220  consumed_samples: 30208  total_loss: 8.13  lm_loss: 7.436  sop_loss: 0.7035  time: 8.2180 s/iter  data_time: 0.0185 s/iter total_throughput: 62.30 samples/s lr: N/A  
+[04/03 09:03:44] lb.utils.events INFO:  eta: 0:21:55  iteration: 59/220  consumed_samples: 30720  total_loss: 8.106  lm_loss: 7.41  sop_loss: 0.7039  time: 8.2189 s/iter  data_time: 0.0183 s/iter total_throughput: 62.30 samples/s lr: N/A  
+[04/03 09:03:52] lb.utils.events INFO:  eta: 0:21:46  iteration: 60/220  consumed_samples: 31232  total_loss: 8.082  lm_loss: 7.384  sop_loss: 0.7035  time: 8.2160 s/iter  data_time: 0.0182 s/iter total_throughput: 62.32 samples/s lr: N/A  
+[04/03 09:04:00] lb.utils.events INFO:  eta: 0:21:37  iteration: 61/220  consumed_samples: 31744  total_loss: 8.078  lm_loss: 7.382  sop_loss: 0.7032  time: 8.2157 s/iter  data_time: 0.0180 s/iter total_throughput: 62.32 samples/s lr: N/A  
+[04/03 09:04:08] lb.utils.events INFO:  eta: 0:21:30  iteration: 62/220  consumed_samples: 32256  total_loss: 8.074  lm_loss: 7.381  sop_loss: 0.703  time: 8.2181 s/iter  data_time: 0.0177 s/iter total_throughput: 62.30 samples/s lr: N/A  
+[04/03 09:04:17] lb.utils.events INFO:  eta: 0:21:21  iteration: 63/220  consumed_samples: 32768  total_loss: 8.067  lm_loss: 7.374  sop_loss: 0.7032  time: 8.2168 s/iter  data_time: 0.0178 s/iter total_throughput: 62.31 samples/s lr: N/A  
+[04/03 09:04:25] lb.utils.events INFO:  eta: 0:21:12  iteration: 64/220  consumed_samples: 33280  total_loss: 8.06  lm_loss: 7.367  sop_loss: 0.7035  time: 8.2161 s/iter  data_time: 0.0178 s/iter total_throughput: 62.32 samples/s lr: N/A  
+[04/03 09:04:33] lb.utils.events INFO:  eta: 0:21:05  iteration: 65/220  consumed_samples: 33792  total_loss: 8.043  lm_loss: 7.348  sop_loss: 0.7032  time: 8.2167 s/iter  data_time: 0.0177 s/iter total_throughput: 62.31 samples/s lr: N/A  
+[04/03 09:04:41] lb.utils.events INFO:  eta: 0:20:57  iteration: 66/220  consumed_samples: 34304  total_loss: 8.025  lm_loss: 7.328  sop_loss: 0.703  time: 8.2172 s/iter  data_time: 0.0178 s/iter total_throughput: 62.31 samples/s lr: N/A  
+[04/03 09:04:49] lb.utils.events INFO:  eta: 0:20:48  iteration: 67/220  consumed_samples: 34816  total_loss: 8.005  lm_loss: 7.312  sop_loss: 0.7032  time: 8.2150 s/iter  data_time: 0.0177 s/iter total_throughput: 62.32 samples/s lr: N/A  
+[04/03 09:04:58] lb.utils.events INFO:  eta: 0:20:40  iteration: 68/220  consumed_samples: 35328  total_loss: 7.985  lm_loss: 7.296  sop_loss: 0.7035  time: 8.2150 s/iter  data_time: 0.0177 s/iter total_throughput: 62.32 samples/s lr: N/A  
+[04/03 09:05:06] lb.utils.events INFO:  eta: 0:20:32  iteration: 69/220  consumed_samples: 35840  total_loss: 7.976  lm_loss: 7.282  sop_loss: 0.7032  time: 8.2155 s/iter  data_time: 0.0176 s/iter total_throughput: 62.32 samples/s lr: N/A  
+[04/03 09:05:14] lb.utils.events INFO:  eta: 0:20:24  iteration: 70/220  consumed_samples: 36352  total_loss: 7.967  lm_loss: 7.269  sop_loss: 0.703  time: 8.2168 s/iter  data_time: 0.0175 s/iter total_throughput: 62.31 samples/s lr: N/A  
+[04/03 09:05:22] lb.utils.events INFO:  eta: 0:20:16  iteration: 71/220  consumed_samples: 36864  total_loss: 7.966  lm_loss: 7.264  sop_loss: 0.7029  time: 8.2175 s/iter  data_time: 0.0175 s/iter total_throughput: 62.31 samples/s lr: N/A  
+[04/03 09:05:31] lb.utils.events INFO:  eta: 0:20:08  iteration: 72/220  consumed_samples: 37376  total_loss: 7.964  lm_loss: 7.259  sop_loss: 0.7027  time: 8.2179 s/iter  data_time: 0.0174 s/iter total_throughput: 62.30 samples/s lr: N/A  
+[04/03 09:05:39] lb.utils.events INFO:  eta: 0:19:59  iteration: 73/220  consumed_samples: 37888  total_loss: 7.964  lm_loss: 7.256  sop_loss: 0.7025  time: 8.2163 s/iter  data_time: 0.0173 s/iter total_throughput: 62.32 samples/s lr: N/A  
+[04/03 09:05:47] lb.utils.events INFO:  eta: 0:19:51  iteration: 74/220  consumed_samples: 38400  total_loss: 7.964  lm_loss: 7.253  sop_loss: 0.7027  time: 8.2156 s/iter  data_time: 0.0175 s/iter total_throughput: 62.32 samples/s lr: N/A  
+[04/03 09:05:55] lb.utils.events INFO:  eta: 0:19:43  iteration: 75/220  consumed_samples: 38912  total_loss: 7.96  lm_loss: 7.253  sop_loss: 0.7029  time: 8.2161 s/iter  data_time: 0.0174 s/iter total_throughput: 62.32 samples/s lr: N/A  
+[04/03 09:06:03] lb.utils.events INFO:  eta: 0:19:35  iteration: 76/220  consumed_samples: 39424  total_loss: 7.957  lm_loss: 7.252  sop_loss: 0.7027  time: 8.2176 s/iter  data_time: 0.0176 s/iter total_throughput: 62.31 samples/s lr: N/A  
+[04/03 09:06:12] lb.utils.events INFO:  eta: 0:19:27  iteration: 77/220  consumed_samples: 39936  total_loss: 7.96  lm_loss: 7.253  sop_loss: 0.7029  time: 8.2168 s/iter  data_time: 0.0179 s/iter total_throughput: 62.31 samples/s lr: N/A  
+[04/03 09:06:20] lb.utils.events INFO:  eta: 0:19:19  iteration: 78/220  consumed_samples: 40448  total_loss: 7.957  lm_loss: 7.252  sop_loss: 0.703  time: 8.2172 s/iter  data_time: 0.0180 s/iter total_throughput: 62.31 samples/s lr: N/A  
+[04/03 09:06:28] lb.utils.events INFO:  eta: 0:19:10  iteration: 79/220  consumed_samples: 40960  total_loss: 7.96  lm_loss: 7.251  sop_loss: 0.703  time: 8.2173 s/iter  data_time: 0.0183 s/iter total_throughput: 62.31 samples/s lr: N/A  
+[04/03 09:06:36] lb.utils.events INFO:  eta: 0:19:02  iteration: 80/220  consumed_samples: 41472  total_loss: 7.957  lm_loss: 7.25  sop_loss: 0.703  time: 8.2170 s/iter  data_time: 0.0182 s/iter total_throughput: 62.31 samples/s lr: N/A  
+[04/03 09:06:45] lb.utils.events INFO:  eta: 0:18:54  iteration: 81/220  consumed_samples: 41984  total_loss: 7.953  lm_loss: 7.25  sop_loss: 0.703  time: 8.2171 s/iter  data_time: 0.0184 s/iter total_throughput: 62.31 samples/s lr: N/A  
+[04/03 09:06:53] lb.utils.events INFO:  eta: 0:18:45  iteration: 82/220  consumed_samples: 42496  total_loss: 7.949  lm_loss: 7.25  sop_loss: 0.703  time: 8.2140 s/iter  data_time: 0.0182 s/iter total_throughput: 62.33 samples/s lr: N/A  
+[04/03 09:07:01] lb.utils.events INFO:  eta: 0:18:37  iteration: 83/220  consumed_samples: 43008  total_loss: 7.947  lm_loss: 7.246  sop_loss: 0.703  time: 8.2144 s/iter  data_time: 0.0184 s/iter total_throughput: 62.33 samples/s lr: N/A  
+[04/03 09:07:09] lb.utils.events INFO:  eta: 0:18:29  iteration: 84/220  consumed_samples: 43520  total_loss: 7.949  lm_loss: 7.249  sop_loss: 0.703  time: 8.2140 s/iter  data_time: 0.0183 s/iter total_throughput: 62.33 samples/s lr: N/A  
+[04/03 09:07:17] lb.utils.events INFO:  eta: 0:18:21  iteration: 85/220  consumed_samples: 44032  total_loss: 7.947  lm_loss: 7.246  sop_loss: 0.7031  time: 8.2129 s/iter  data_time: 0.0184 s/iter total_throughput: 62.34 samples/s lr: N/A  
+[04/03 09:07:25] lb.utils.events INFO:  eta: 0:18:12  iteration: 86/220  consumed_samples: 44544  total_loss: 7.946  lm_loss: 7.243  sop_loss: 0.703  time: 8.2105 s/iter  data_time: 0.0186 s/iter total_throughput: 62.36 samples/s lr: N/A  
+[04/03 09:07:34] lb.utils.events INFO:  eta: 0:18:04  iteration: 87/220  consumed_samples: 45056  total_loss: 7.946  lm_loss: 7.243  sop_loss: 0.7031  time: 8.2105 s/iter  data_time: 0.0187 s/iter total_throughput: 62.36 samples/s lr: N/A  
+[04/03 09:07:42] lb.utils.events INFO:  eta: 0:17:56  iteration: 88/220  consumed_samples: 45568  total_loss: 7.945  lm_loss: 7.243  sop_loss: 0.703  time: 8.2086 s/iter  data_time: 0.0187 s/iter total_throughput: 62.37 samples/s lr: N/A  
+[04/03 09:07:50] lb.utils.events INFO:  eta: 0:17:47  iteration: 89/220  consumed_samples: 46080  total_loss: 7.945  lm_loss: 7.243  sop_loss: 0.703  time: 8.2078 s/iter  data_time: 0.0189 s/iter total_throughput: 62.38 samples/s lr: N/A  
+[04/03 09:07:58] lb.utils.events INFO:  eta: 0:17:39  iteration: 90/220  consumed_samples: 46592  total_loss: 7.945  lm_loss: 7.243  sop_loss: 0.703  time: 8.2075 s/iter  data_time: 0.0190 s/iter total_throughput: 62.38 samples/s lr: N/A  
+[04/03 09:08:06] lb.utils.events INFO:  eta: 0:17:31  iteration: 91/220  consumed_samples: 47104  total_loss: 7.945  lm_loss: 7.242  sop_loss: 0.703  time: 8.2060 s/iter  data_time: 0.0190 s/iter total_throughput: 62.39 samples/s lr: N/A  
+[04/03 09:08:14] lb.utils.events INFO:  eta: 0:17:22  iteration: 92/220  consumed_samples: 47616  total_loss: 7.945  lm_loss: 7.241  sop_loss: 0.703  time: 8.2056 s/iter  data_time: 0.0191 s/iter total_throughput: 62.40 samples/s lr: N/A  
+[04/03 09:08:22] lb.utils.events INFO:  eta: 0:17:14  iteration: 93/220  consumed_samples: 48128  total_loss: 7.944  lm_loss: 7.238  sop_loss: 0.703  time: 8.2063 s/iter  data_time: 0.0192 s/iter total_throughput: 62.39 samples/s lr: N/A  
+[04/03 09:08:31] lb.utils.events INFO:  eta: 0:17:06  iteration: 94/220  consumed_samples: 48640  total_loss: 7.944  lm_loss: 7.236  sop_loss: 0.703  time: 8.2064 s/iter  data_time: 0.0192 s/iter total_throughput: 62.39 samples/s lr: N/A  
+[04/03 09:08:39] lb.utils.events INFO:  eta: 0:16:58  iteration: 95/220  consumed_samples: 49152  total_loss: 7.942  lm_loss: 7.234  sop_loss: 0.703  time: 8.2075 s/iter  data_time: 0.0195 s/iter total_throughput: 62.38 samples/s lr: N/A  
+[04/03 09:08:47] lb.utils.events INFO:  eta: 0:16:50  iteration: 96/220  consumed_samples: 49664  total_loss: 7.941  lm_loss: 7.232  sop_loss: 0.703  time: 8.2069 s/iter  data_time: 0.0196 s/iter total_throughput: 62.39 samples/s lr: N/A  
+[04/03 09:08:55] lb.utils.events INFO:  eta: 0:16:41  iteration: 97/220  consumed_samples: 50176  total_loss: 7.94  lm_loss: 7.231  sop_loss: 0.7029  time: 8.2070 s/iter  data_time: 0.0197 s/iter total_throughput: 62.39 samples/s lr: N/A  
+[04/03 09:09:04] lb.utils.events INFO:  eta: 0:16:33  iteration: 98/220  consumed_samples: 50688  total_loss: 7.94  lm_loss: 7.23  sop_loss: 0.7027  time: 8.2068 s/iter  data_time: 0.0194 s/iter total_throughput: 62.39 samples/s lr: N/A  
+[04/03 09:09:12] lb.utils.events INFO:  eta: 0:16:25  iteration: 99/220  consumed_samples: 51200  total_loss: 7.939  lm_loss: 7.23  sop_loss: 0.7026  time: 8.2079 s/iter  data_time: 0.0193 s/iter total_throughput: 62.38 samples/s lr: N/A  
+[04/03 09:09:20] lb.utils.events INFO:  eta: 0:16:17  iteration: 100/220  consumed_samples: 51712  total_loss: 7.938  lm_loss: 7.23  sop_loss: 0.7025  time: 8.2075 s/iter  data_time: 0.0196 s/iter total_throughput: 62.38 samples/s lr: N/A  
+[04/03 09:09:28] lb.utils.events INFO:  eta: 0:16:09  iteration: 101/220  consumed_samples: 52224  total_loss: 7.937  lm_loss: 7.227  sop_loss: 0.7023  time: 8.2074 s/iter  data_time: 0.0194 s/iter total_throughput: 62.38 samples/s lr: N/A  
+[04/03 09:09:37] lb.utils.events INFO:  eta: 0:16:00  iteration: 102/220  consumed_samples: 52736  total_loss: 7.935  lm_loss: 7.225  sop_loss: 0.7022  time: 8.2070 s/iter  data_time: 0.0196 s/iter total_throughput: 62.39 samples/s lr: N/A  
+[04/03 09:09:45] lb.utils.events INFO:  eta: 0:15:52  iteration: 103/220  consumed_samples: 53248  total_loss: 7.934  lm_loss: 7.225  sop_loss: 0.7023  time: 8.2056 s/iter  data_time: 0.0193 s/iter total_throughput: 62.40 samples/s lr: N/A  
+[04/03 09:09:53] lb.utils.events INFO:  eta: 0:15:44  iteration: 104/220  consumed_samples: 53760  total_loss: 7.933  lm_loss: 7.224  sop_loss: 0.7022  time: 8.2047 s/iter  data_time: 0.0195 s/iter total_throughput: 62.40 samples/s lr: N/A  
+[04/03 09:10:01] lb.utils.events INFO:  eta: 0:15:35  iteration: 105/220  consumed_samples: 54272  total_loss: 7.932  lm_loss: 7.224  sop_loss: 0.702  time: 8.2046 s/iter  data_time: 0.0195 s/iter total_throughput: 62.40 samples/s lr: N/A  
+[04/03 09:10:09] lb.utils.events INFO:  eta: 0:15:27  iteration: 106/220  consumed_samples: 54784  total_loss: 7.932  lm_loss: 7.224  sop_loss: 0.7018  time: 8.2045 s/iter  data_time: 0.0194 s/iter total_throughput: 62.40 samples/s lr: N/A  
+[04/03 09:10:18] lb.utils.events INFO:  eta: 0:15:19  iteration: 107/220  consumed_samples: 55296  total_loss: 7.93  lm_loss: 7.223  sop_loss: 0.7015  time: 8.2054 s/iter  data_time: 0.0193 s/iter total_throughput: 62.40 samples/s lr: N/A  
+[04/03 09:10:26] lb.utils.events INFO:  eta: 0:15:11  iteration: 108/220  consumed_samples: 55808  total_loss: 7.927  lm_loss: 7.222  sop_loss: 0.7012  time: 8.2056 s/iter  data_time: 0.0194 s/iter total_throughput: 62.40 samples/s lr: N/A  
+[04/03 09:10:34] lb.utils.events INFO:  eta: 0:15:03  iteration: 109/220  consumed_samples: 56320  total_loss: 7.927  lm_loss: 7.222  sop_loss: 0.7011  time: 8.2061 s/iter  data_time: 0.0193 s/iter total_throughput: 62.39 samples/s lr: N/A  
+[04/03 09:10:42] lb.utils.events INFO:  eta: 0:14:54  iteration: 110/220  consumed_samples: 56832  total_loss: 7.926  lm_loss: 7.222  sop_loss: 0.701  time: 8.2047 s/iter  data_time: 0.0192 s/iter total_throughput: 62.40 samples/s lr: N/A  
+[04/03 09:10:51] lb.utils.events INFO:  eta: 0:14:46  iteration: 111/220  consumed_samples: 57344  total_loss: 7.926  lm_loss: 7.222  sop_loss: 0.7009  time: 8.2057 s/iter  data_time: 0.0193 s/iter total_throughput: 62.40 samples/s lr: N/A  
+[04/03 09:10:59] lb.utils.events INFO:  eta: 0:14:38  iteration: 112/220  consumed_samples: 57856  total_loss: 7.926  lm_loss: 7.222  sop_loss: 0.7008  time: 8.2053 s/iter  data_time: 0.0194 s/iter total_throughput: 62.40 samples/s lr: N/A  
+[04/03 09:11:07] lb.utils.events INFO:  eta: 0:14:30  iteration: 113/220  consumed_samples: 58368  total_loss: 7.926  lm_loss: 7.221  sop_loss: 0.7005  time: 8.2043 s/iter  data_time: 0.0193 s/iter total_throughput: 62.41 samples/s lr: N/A  
+[04/03 09:11:15] lb.utils.events INFO:  eta: 0:14:22  iteration: 114/220  consumed_samples: 58880  total_loss: 7.926  lm_loss: 7.221  sop_loss: 0.7002  time: 8.2038 s/iter  data_time: 0.0194 s/iter total_throughput: 62.41 samples/s lr: N/A  
+[04/03 09:11:23] lb.utils.events INFO:  eta: 0:14:13  iteration: 115/220  consumed_samples: 59392  total_loss: 7.924  lm_loss: 7.221  sop_loss: 0.6999  time: 8.2037 s/iter  data_time: 0.0191 s/iter total_throughput: 62.41 samples/s lr: N/A  
+[04/03 09:11:31] lb.utils.events INFO:  eta: 0:14:05  iteration: 116/220  consumed_samples: 59904  total_loss: 7.923  lm_loss: 7.22  sop_loss: 0.6995  time: 8.2028 s/iter  data_time: 0.0190 s/iter total_throughput: 62.42 samples/s lr: N/A  
+[04/03 09:11:39] lb.utils.events INFO:  eta: 0:13:57  iteration: 117/220  consumed_samples: 60416  total_loss: 7.922  lm_loss: 7.22  sop_loss: 0.6994  time: 8.2021 s/iter  data_time: 0.0189 s/iter total_throughput: 62.42 samples/s lr: N/A  
+[04/03 09:11:47] lb.utils.events INFO:  eta: 0:13:48  iteration: 118/220  consumed_samples: 60928  total_loss: 7.922  lm_loss: 7.219  sop_loss: 0.6993  time: 8.2010 s/iter  data_time: 0.0191 s/iter total_throughput: 62.43 samples/s lr: N/A  
+[04/03 09:11:56] lb.utils.events INFO:  eta: 0:13:40  iteration: 119/220  consumed_samples: 61440  total_loss: 7.921  lm_loss: 7.22  sop_loss: 0.6991  time: 8.2003 s/iter  data_time: 0.0191 s/iter total_throughput: 62.44 samples/s lr: N/A  
+[04/03 09:12:04] lb.utils.events INFO:  eta: 0:13:32  iteration: 120/220  consumed_samples: 61952  total_loss: 7.922  lm_loss: 7.22  sop_loss: 0.699  time: 8.2004 s/iter  data_time: 0.0190 s/iter total_throughput: 62.44 samples/s lr: N/A  
+[04/03 09:12:12] lb.utils.events INFO:  eta: 0:13:24  iteration: 121/220  consumed_samples: 62464  total_loss: 7.921  lm_loss: 7.221  sop_loss: 0.6988  time: 8.2006 s/iter  data_time: 0.0189 s/iter total_throughput: 62.43 samples/s lr: N/A  
+[04/03 09:12:20] lb.utils.events INFO:  eta: 0:13:15  iteration: 122/220  consumed_samples: 62976  total_loss: 7.92  lm_loss: 7.22  sop_loss: 0.6986  time: 8.1986 s/iter  data_time: 0.0188 s/iter total_throughput: 62.45 samples/s lr: N/A  
+[04/03 09:12:28] lb.utils.events INFO:  eta: 0:13:07  iteration: 123/220  consumed_samples: 63488  total_loss: 7.92  lm_loss: 7.22  sop_loss: 0.6986  time: 8.1993 s/iter  data_time: 0.0190 s/iter total_throughput: 62.44 samples/s lr: N/A  
+[04/03 09:12:36] lb.utils.events INFO:  eta: 0:12:59  iteration: 124/220  consumed_samples: 64000  total_loss: 7.919  lm_loss: 7.219  sop_loss: 0.6986  time: 8.1985 s/iter  data_time: 0.0187 s/iter total_throughput: 62.45 samples/s lr: N/A  
+[04/03 09:12:45] lb.utils.events INFO:  eta: 0:12:51  iteration: 125/220  consumed_samples: 64512  total_loss: 7.919  lm_loss: 7.218  sop_loss: 0.6985  time: 8.1975 s/iter  data_time: 0.0188 s/iter total_throughput: 62.46 samples/s lr: N/A  
+[04/03 09:12:53] lb.utils.events INFO:  eta: 0:12:43  iteration: 126/220  consumed_samples: 65024  total_loss: 7.918  lm_loss: 7.218  sop_loss: 0.6984  time: 8.1981 s/iter  data_time: 0.0187 s/iter total_throughput: 62.45 samples/s lr: N/A  
+[04/03 09:13:01] lb.utils.events INFO:  eta: 0:12:35  iteration: 127/220  consumed_samples: 65536  total_loss: 7.918  lm_loss: 7.218  sop_loss: 0.6983  time: 8.1990 s/iter  data_time: 0.0186 s/iter total_throughput: 62.45 samples/s lr: N/A  
+[04/03 09:13:09] lb.utils.events INFO:  eta: 0:12:26  iteration: 128/220  consumed_samples: 66048  total_loss: 7.918  lm_loss: 7.218  sop_loss: 0.6982  time: 8.1982 s/iter  data_time: 0.0187 s/iter total_throughput: 62.45 samples/s lr: N/A  
+[04/03 09:13:17] lb.utils.events INFO:  eta: 0:12:18  iteration: 129/220  consumed_samples: 66560  total_loss: 7.918  lm_loss: 7.218  sop_loss: 0.6982  time: 8.1985 s/iter  data_time: 0.0187 s/iter total_throughput: 62.45 samples/s lr: N/A  
+[04/03 09:13:26] lb.utils.events INFO:  eta: 0:12:10  iteration: 130/220  consumed_samples: 67072  total_loss: 7.917  lm_loss: 7.217  sop_loss: 0.6982  time: 8.1988 s/iter  data_time: 0.0186 s/iter total_throughput: 62.45 samples/s lr: N/A  
+[04/03 09:13:34] lb.utils.events INFO:  eta: 0:12:02  iteration: 131/220  consumed_samples: 67584  total_loss: 7.917  lm_loss: 7.217  sop_loss: 0.6981  time: 8.1986 s/iter  data_time: 0.0187 s/iter total_throughput: 62.45 samples/s lr: N/A  
+[04/03 09:13:42] lb.utils.events INFO:  eta: 0:11:54  iteration: 132/220  consumed_samples: 68096  total_loss: 7.917  lm_loss: 7.216  sop_loss: 0.698  time: 8.1988 s/iter  data_time: 0.0185 s/iter total_throughput: 62.45 samples/s lr: N/A  
+[04/03 09:13:50] lb.utils.events INFO:  eta: 0:11:45  iteration: 133/220  consumed_samples: 68608  total_loss: 7.917  lm_loss: 7.216  sop_loss: 0.6979  time: 8.1985 s/iter  data_time: 0.0187 s/iter total_throughput: 62.45 samples/s lr: N/A  
+[04/03 09:13:59] lb.utils.events INFO:  eta: 0:11:37  iteration: 134/220  consumed_samples: 69120  total_loss: 7.917  lm_loss: 7.216  sop_loss: 0.6979  time: 8.1971 s/iter  data_time: 0.0187 s/iter total_throughput: 62.46 samples/s lr: N/A  
+[04/03 09:14:07] lb.utils.events INFO:  eta: 0:11:29  iteration: 135/220  consumed_samples: 69632  total_loss: 7.916  lm_loss: 7.215  sop_loss: 0.6979  time: 8.1975 s/iter  data_time: 0.0189 s/iter total_throughput: 62.46 samples/s lr: N/A  
+[04/03 09:14:15] lb.utils.events INFO:  eta: 0:11:21  iteration: 136/220  consumed_samples: 70144  total_loss: 7.917  lm_loss: 7.216  sop_loss: 0.6979  time: 8.1978 s/iter  data_time: 0.0190 s/iter total_throughput: 62.46 samples/s lr: N/A  
+[04/03 09:14:23] lb.utils.events INFO:  eta: 0:11:13  iteration: 137/220  consumed_samples: 70656  total_loss: 7.916  lm_loss: 7.215  sop_loss: 0.6975  time: 8.1979 s/iter  data_time: 0.0188 s/iter total_throughput: 62.46 samples/s lr: N/A  
+[04/03 09:14:32] lb.utils.events INFO:  eta: 0:11:04  iteration: 138/220  consumed_samples: 71168  total_loss: 7.915  lm_loss: 7.215  sop_loss: 0.6972  time: 8.1988 s/iter  data_time: 0.0187 s/iter total_throughput: 62.45 samples/s lr: N/A  
+[04/03 09:14:40] lb.utils.events INFO:  eta: 0:10:56  iteration: 139/220  consumed_samples: 71680  total_loss: 7.915  lm_loss: 7.215  sop_loss: 0.6971  time: 8.1980 s/iter  data_time: 0.0188 s/iter total_throughput: 62.45 samples/s lr: N/A  
+[04/03 09:14:48] lb.utils.events INFO:  eta: 0:10:48  iteration: 140/220  consumed_samples: 72192  total_loss: 7.915  lm_loss: 7.215  sop_loss: 0.697  time: 8.1971 s/iter  data_time: 0.0189 s/iter total_throughput: 62.46 samples/s lr: N/A  
+[04/03 09:14:56] lb.utils.events INFO:  eta: 0:10:40  iteration: 141/220  consumed_samples: 72704  total_loss: 7.914  lm_loss: 7.214  sop_loss: 0.697  time: 8.1967 s/iter  data_time: 0.0190 s/iter total_throughput: 62.46 samples/s lr: N/A  
+[04/03 09:15:04] lb.utils.events INFO:  eta: 0:10:31  iteration: 142/220  consumed_samples: 73216  total_loss: 7.915  lm_loss: 7.215  sop_loss: 0.6969  time: 8.1963 s/iter  data_time: 0.0190 s/iter total_throughput: 62.47 samples/s lr: N/A  
+[04/03 09:15:12] lb.utils.events INFO:  eta: 0:10:23  iteration: 143/220  consumed_samples: 73728  total_loss: 7.914  lm_loss: 7.214  sop_loss: 0.6969  time: 8.1966 s/iter  data_time: 0.0187 s/iter total_throughput: 62.47 samples/s lr: N/A  
+[04/03 09:15:20] lb.utils.events INFO:  eta: 0:10:15  iteration: 144/220  consumed_samples: 74240  total_loss: 7.915  lm_loss: 7.215  sop_loss: 0.6969  time: 8.1954 s/iter  data_time: 0.0186 s/iter total_throughput: 62.47 samples/s lr: N/A  
+[04/03 09:15:28] lb.utils.events INFO:  eta: 0:10:07  iteration: 145/220  consumed_samples: 74752  total_loss: 7.914  lm_loss: 7.214  sop_loss: 0.6969  time: 8.1947 s/iter  data_time: 0.0185 s/iter total_throughput: 62.48 samples/s lr: N/A  
+[04/03 09:15:37] lb.utils.events INFO:  eta: 0:09:58  iteration: 146/220  consumed_samples: 75264  total_loss: 7.913  lm_loss: 7.214  sop_loss: 0.6968  time: 8.1938 s/iter  data_time: 0.0186 s/iter total_throughput: 62.49 samples/s lr: N/A  
+[04/03 09:15:45] lb.utils.events INFO:  eta: 0:09:50  iteration: 147/220  consumed_samples: 75776  total_loss: 7.913  lm_loss: 7.214  sop_loss: 0.6968  time: 8.1943 s/iter  data_time: 0.0184 s/iter total_throughput: 62.48 samples/s lr: N/A  
+[04/03 09:15:53] lb.utils.events INFO:  eta: 0:09:42  iteration: 148/220  consumed_samples: 76288  total_loss: 7.913  lm_loss: 7.214  sop_loss: 0.6968  time: 8.1931 s/iter  data_time: 0.0184 s/iter total_throughput: 62.49 samples/s lr: N/A  
+[04/03 09:16:01] lb.utils.events INFO:  eta: 0:09:34  iteration: 149/220  consumed_samples: 76800  total_loss: 7.913  lm_loss: 7.214  sop_loss: 0.6967  time: 8.1930 s/iter  data_time: 0.0186 s/iter total_throughput: 62.49 samples/s lr: N/A  
+[04/03 09:16:09] lb.utils.events INFO:  eta: 0:09:26  iteration: 150/220  consumed_samples: 77312  total_loss: 7.913  lm_loss: 7.213  sop_loss: 0.6965  time: 8.1918 s/iter  data_time: 0.0187 s/iter total_throughput: 62.50 samples/s lr: N/A  
+[04/03 09:16:17] lb.utils.events INFO:  eta: 0:09:17  iteration: 151/220  consumed_samples: 77824  total_loss: 7.912  lm_loss: 7.213  sop_loss: 0.6964  time: 8.1919 s/iter  data_time: 0.0188 s/iter total_throughput: 62.50 samples/s lr: N/A  
+[04/03 09:16:25] lb.utils.events INFO:  eta: 0:09:09  iteration: 152/220  consumed_samples: 78336  total_loss: 7.912  lm_loss: 7.213  sop_loss: 0.6963  time: 8.1916 s/iter  data_time: 0.0188 s/iter total_throughput: 62.50 samples/s lr: N/A  
+[04/03 09:16:34] lb.utils.events INFO:  eta: 0:09:01  iteration: 153/220  consumed_samples: 78848  total_loss: 7.912  lm_loss: 7.213  sop_loss: 0.6959  time: 8.1915 s/iter  data_time: 0.0187 s/iter total_throughput: 62.50 samples/s lr: N/A  
+[04/03 09:16:42] lb.utils.events INFO:  eta: 0:08:53  iteration: 154/220  consumed_samples: 79360  total_loss: 7.912  lm_loss: 7.212  sop_loss: 0.6963  time: 8.1915 s/iter  data_time: 0.0185 s/iter total_throughput: 62.50 samples/s lr: N/A  
+[04/03 09:16:50] lb.utils.events INFO:  eta: 0:08:44  iteration: 155/220  consumed_samples: 79872  total_loss: 7.911  lm_loss: 7.212  sop_loss: 0.6964  time: 8.1919 s/iter  data_time: 0.0184 s/iter total_throughput: 62.50 samples/s lr: N/A  
+[04/03 09:16:58] lb.utils.events INFO:  eta: 0:08:36  iteration: 156/220  consumed_samples: 80384  total_loss: 7.911  lm_loss: 7.212  sop_loss: 0.6963  time: 8.1918 s/iter  data_time: 0.0182 s/iter total_throughput: 62.50 samples/s lr: N/A  
+[04/03 09:17:06] lb.utils.events INFO:  eta: 0:08:28  iteration: 157/220  consumed_samples: 80896  total_loss: 7.911  lm_loss: 7.212  sop_loss: 0.6959  time: 8.1910 s/iter  data_time: 0.0182 s/iter total_throughput: 62.51 samples/s lr: N/A  
+[04/03 09:17:14] lb.utils.events INFO:  eta: 0:08:20  iteration: 158/220  consumed_samples: 81408  total_loss: 7.911  lm_loss: 7.212  sop_loss: 0.6956  time: 8.1904 s/iter  data_time: 0.0183 s/iter total_throughput: 62.51 samples/s lr: N/A  
+[04/03 09:17:23] lb.utils.events INFO:  eta: 0:08:11  iteration: 159/220  consumed_samples: 81920  total_loss: 7.911  lm_loss: 7.212  sop_loss: 0.6956  time: 8.1904 s/iter  data_time: 0.0183 s/iter total_throughput: 62.51 samples/s lr: N/A  
+[04/03 09:17:31] lb.utils.events INFO:  eta: 0:08:03  iteration: 160/220  consumed_samples: 82432  total_loss: 7.91  lm_loss: 7.211  sop_loss: 0.6956  time: 8.1905 s/iter  data_time: 0.0183 s/iter total_throughput: 62.51 samples/s lr: N/A  
+[04/03 09:17:39] lb.utils.events INFO:  eta: 0:07:55  iteration: 161/220  consumed_samples: 82944  total_loss: 7.91  lm_loss: 7.211  sop_loss: 0.6956  time: 8.1904 s/iter  data_time: 0.0182 s/iter total_throughput: 62.51 samples/s lr: N/A  
+[04/03 09:17:47] lb.utils.events INFO:  eta: 0:07:47  iteration: 162/220  consumed_samples: 83456  total_loss: 7.91  lm_loss: 7.211  sop_loss: 0.6956  time: 8.1905 s/iter  data_time: 0.0182 s/iter total_throughput: 62.51 samples/s lr: N/A  
+[04/03 09:17:56] lb.utils.events INFO:  eta: 0:07:39  iteration: 163/220  consumed_samples: 83968  total_loss: 7.91  lm_loss: 7.211  sop_loss: 0.6959  time: 8.1908 s/iter  data_time: 0.0184 s/iter total_throughput: 62.51 samples/s lr: N/A  
+[04/03 09:18:04] lb.utils.events INFO:  eta: 0:07:30  iteration: 164/220  consumed_samples: 84480  total_loss: 7.91  lm_loss: 7.211  sop_loss: 0.6956  time: 8.1898 s/iter  data_time: 0.0186 s/iter total_throughput: 62.52 samples/s lr: N/A  
+[04/03 09:18:12] lb.utils.events INFO:  eta: 0:07:22  iteration: 165/220  consumed_samples: 84992  total_loss: 7.91  lm_loss: 7.211  sop_loss: 0.6959  time: 8.1903 s/iter  data_time: 0.0187 s/iter total_throughput: 62.51 samples/s lr: N/A  
+[04/03 09:18:20] lb.utils.events INFO:  eta: 0:07:14  iteration: 166/220  consumed_samples: 85504  total_loss: 7.91  lm_loss: 7.211  sop_loss: 0.6963  time: 8.1904 s/iter  data_time: 0.0185 s/iter total_throughput: 62.51 samples/s lr: N/A  
+[04/03 09:18:28] lb.utils.events INFO:  eta: 0:07:06  iteration: 167/220  consumed_samples: 86016  total_loss: 7.91  lm_loss: 7.21  sop_loss: 0.6959  time: 8.1899 s/iter  data_time: 0.0187 s/iter total_throughput: 62.52 samples/s lr: N/A  
+[04/03 09:18:36] lb.utils.events INFO:  eta: 0:06:58  iteration: 168/220  consumed_samples: 86528  total_loss: 7.91  lm_loss: 7.21  sop_loss: 0.6956  time: 8.1891 s/iter  data_time: 0.0185 s/iter total_throughput: 62.52 samples/s lr: N/A  
+[04/03 09:18:45] lb.utils.events INFO:  eta: 0:06:49  iteration: 169/220  consumed_samples: 87040  total_loss: 7.91  lm_loss: 7.21  sop_loss: 0.6959  time: 8.1891 s/iter  data_time: 0.0183 s/iter total_throughput: 62.52 samples/s lr: N/A  
+[04/03 09:18:53] lb.utils.events INFO:  eta: 0:06:41  iteration: 170/220  consumed_samples: 87552  total_loss: 7.91  lm_loss: 7.21  sop_loss: 0.6956  time: 8.1891 s/iter  data_time: 0.0183 s/iter total_throughput: 62.52 samples/s lr: N/A  
+[04/03 09:19:01] lb.utils.events INFO:  eta: 0:06:33  iteration: 171/220  consumed_samples: 88064  total_loss: 7.909  lm_loss: 7.21  sop_loss: 0.6956  time: 8.1885 s/iter  data_time: 0.0182 s/iter total_throughput: 62.53 samples/s lr: N/A  
+[04/03 09:19:09] lb.utils.events INFO:  eta: 0:06:25  iteration: 172/220  consumed_samples: 88576  total_loss: 7.909  lm_loss: 7.21  sop_loss: 0.6956  time: 8.1889 s/iter  data_time: 0.0183 s/iter total_throughput: 62.52 samples/s lr: N/A  
+[04/03 09:19:18] lb.utils.events INFO:  eta: 0:06:17  iteration: 173/220  consumed_samples: 89088  total_loss: 7.909  lm_loss: 7.21  sop_loss: 0.6959  time: 8.1893 s/iter  data_time: 0.0183 s/iter total_throughput: 62.52 samples/s lr: N/A  
+[04/03 09:19:26] lb.utils.events INFO:  eta: 0:06:08  iteration: 174/220  consumed_samples: 89600  total_loss: 7.909  lm_loss: 7.21  sop_loss: 0.6963  time: 8.1897 s/iter  data_time: 0.0184 s/iter total_throughput: 62.52 samples/s lr: N/A  
+[04/03 09:19:34] lb.utils.events INFO:  eta: 0:06:00  iteration: 175/220  consumed_samples: 90112  total_loss: 7.909  lm_loss: 7.21  sop_loss: 0.6959  time: 8.1892 s/iter  data_time: 0.0182 s/iter total_throughput: 62.52 samples/s lr: N/A  
+[04/03 09:19:42] lb.utils.events INFO:  eta: 0:05:52  iteration: 176/220  consumed_samples: 90624  total_loss: 7.908  lm_loss: 7.21  sop_loss: 0.6956  time: 8.1892 s/iter  data_time: 0.0184 s/iter total_throughput: 62.52 samples/s lr: N/A  
+[04/03 09:19:50] lb.utils.events INFO:  eta: 0:05:44  iteration: 177/220  consumed_samples: 91136  total_loss: 7.908  lm_loss: 7.209  sop_loss: 0.6956  time: 8.1888 s/iter  data_time: 0.0187 s/iter total_throughput: 62.52 samples/s lr: N/A  
+[04/03 09:19:58] lb.utils.events INFO:  eta: 0:05:36  iteration: 178/220  consumed_samples: 91648  total_loss: 7.908  lm_loss: 7.208  sop_loss: 0.6956  time: 8.1881 s/iter  data_time: 0.0185 s/iter total_throughput: 62.53 samples/s lr: N/A  
+[04/03 09:20:07] lb.utils.events INFO:  eta: 0:05:27  iteration: 179/220  consumed_samples: 92160  total_loss: 7.907  lm_loss: 7.208  sop_loss: 0.6956  time: 8.1885 s/iter  data_time: 0.0184 s/iter total_throughput: 62.53 samples/s lr: N/A  
+[04/03 09:20:15] lb.utils.events INFO:  eta: 0:05:19  iteration: 180/220  consumed_samples: 92672  total_loss: 7.907  lm_loss: 7.208  sop_loss: 0.6956  time: 8.1885 s/iter  data_time: 0.0181 s/iter total_throughput: 62.53 samples/s lr: N/A  
+[04/03 09:20:23] lb.utils.events INFO:  eta: 0:05:11  iteration: 181/220  consumed_samples: 93184  total_loss: 7.907  lm_loss: 7.208  sop_loss: 0.6955  time: 8.1879 s/iter  data_time: 0.0181 s/iter total_throughput: 62.53 samples/s lr: N/A  
+[04/03 09:20:31] lb.utils.events INFO:  eta: 0:05:03  iteration: 182/220  consumed_samples: 93696  total_loss: 7.906  lm_loss: 7.208  sop_loss: 0.6955  time: 8.1880 s/iter  data_time: 0.0180 s/iter total_throughput: 62.53 samples/s lr: N/A  
+[04/03 09:20:39] lb.utils.events INFO:  eta: 0:04:55  iteration: 183/220  consumed_samples: 94208  total_loss: 7.906  lm_loss: 7.208  sop_loss: 0.6954  time: 8.1877 s/iter  data_time: 0.0179 s/iter total_throughput: 62.53 samples/s lr: N/A  
+[04/03 09:20:48] lb.utils.events INFO:  eta: 0:04:46  iteration: 184/220  consumed_samples: 94720  total_loss: 7.906  lm_loss: 7.208  sop_loss: 0.6954  time: 8.1881 s/iter  data_time: 0.0179 s/iter total_throughput: 62.53 samples/s lr: N/A  
+[04/03 09:20:56] lb.utils.events INFO:  eta: 0:04:38  iteration: 185/220  consumed_samples: 95232  total_loss: 7.906  lm_loss: 7.207  sop_loss: 0.6953  time: 8.1879 s/iter  data_time: 0.0179 s/iter total_throughput: 62.53 samples/s lr: N/A  
+[04/03 09:21:04] lb.utils.events INFO:  eta: 0:04:30  iteration: 186/220  consumed_samples: 95744  total_loss: 7.905  lm_loss: 7.207  sop_loss: 0.6951  time: 8.1873 s/iter  data_time: 0.0180 s/iter total_throughput: 62.54 samples/s lr: N/A  
+[04/03 09:21:12] lb.utils.events INFO:  eta: 0:04:22  iteration: 187/220  consumed_samples: 96256  total_loss: 7.905  lm_loss: 7.207  sop_loss: 0.6951  time: 8.1874 s/iter  data_time: 0.0179 s/iter total_throughput: 62.53 samples/s lr: N/A  
+[04/03 09:21:20] lb.utils.events INFO:  eta: 0:04:14  iteration: 188/220  consumed_samples: 96768  total_loss: 7.904  lm_loss: 7.207  sop_loss: 0.695  time: 8.1874 s/iter  data_time: 0.0181 s/iter total_throughput: 62.53 samples/s lr: N/A  
+[04/03 09:21:28] lb.utils.events INFO:  eta: 0:04:05  iteration: 189/220  consumed_samples: 97280  total_loss: 7.904  lm_loss: 7.206  sop_loss: 0.6951  time: 8.1874 s/iter  data_time: 0.0181 s/iter total_throughput: 62.54 samples/s lr: N/A  
+[04/03 09:21:37] lb.utils.events INFO:  eta: 0:03:57  iteration: 190/220  consumed_samples: 97792  total_loss: 7.904  lm_loss: 7.206  sop_loss: 0.695  time: 8.1875 s/iter  data_time: 0.0180 s/iter total_throughput: 62.53 samples/s lr: N/A  
+[04/03 09:21:45] lb.utils.events INFO:  eta: 0:03:49  iteration: 191/220  consumed_samples: 98304  total_loss: 7.904  lm_loss: 7.206  sop_loss: 0.695  time: 8.1877 s/iter  data_time: 0.0180 s/iter total_throughput: 62.53 samples/s lr: N/A  
+[04/03 09:21:53] lb.utils.events INFO:  eta: 0:03:41  iteration: 192/220  consumed_samples: 98816  total_loss: 7.904  lm_loss: 7.206  sop_loss: 0.695  time: 8.1871 s/iter  data_time: 0.0178 s/iter total_throughput: 62.54 samples/s lr: N/A  
+[04/03 09:22:01] lb.utils.events INFO:  eta: 0:03:33  iteration: 193/220  consumed_samples: 99328  total_loss: 7.904  lm_loss: 7.206  sop_loss: 0.695  time: 8.1866 s/iter  data_time: 0.0178 s/iter total_throughput: 62.54 samples/s lr: N/A  
+[04/03 09:22:09] lb.utils.events INFO:  eta: 0:03:24  iteration: 194/220  consumed_samples: 99840  total_loss: 7.904  lm_loss: 7.206  sop_loss: 0.6949  time: 8.1867 s/iter  data_time: 0.0178 s/iter total_throughput: 62.54 samples/s lr: N/A  
+[04/03 09:22:17] lb.utils.events INFO:  eta: 0:03:16  iteration: 195/220  consumed_samples: 100352  total_loss: 7.904  lm_loss: 7.206  sop_loss: 0.6949  time: 8.1870 s/iter  data_time: 0.0177 s/iter total_throughput: 62.54 samples/s lr: N/A  
+[04/03 09:22:26] lb.utils.events INFO:  eta: 0:03:08  iteration: 196/220  consumed_samples: 100864  total_loss: 7.904  lm_loss: 7.206  sop_loss: 0.6949  time: 8.1866 s/iter  data_time: 0.0177 s/iter total_throughput: 62.54 samples/s lr: N/A  
+[04/03 09:22:34] lb.utils.events INFO:  eta: 0:03:00  iteration: 197/220  consumed_samples: 101376  total_loss: 7.903  lm_loss: 7.205  sop_loss: 0.6949  time: 8.1864 s/iter  data_time: 0.0173 s/iter total_throughput: 62.54 samples/s lr: N/A  
+[04/03 09:22:42] lb.utils.events INFO:  eta: 0:02:52  iteration: 198/220  consumed_samples: 101888  total_loss: 7.903  lm_loss: 7.204  sop_loss: 0.6949  time: 8.1866 s/iter  data_time: 0.0175 s/iter total_throughput: 62.54 samples/s lr: N/A  
+[04/03 09:22:50] lb.utils.events INFO:  eta: 0:02:43  iteration: 199/220  consumed_samples: 102400  total_loss: 7.903  lm_loss: 7.204  sop_loss: 0.6948  time: 8.1856 s/iter  data_time: 0.0177 s/iter total_throughput: 62.55 samples/s lr: N/A  
+[04/03 09:22:58] lb.utils.events INFO:  eta: 0:02:35  iteration: 200/220  consumed_samples: 102912  total_loss: 7.903  lm_loss: 7.204  sop_loss: 0.6947  time: 8.1857 s/iter  data_time: 0.0179 s/iter total_throughput: 62.55 samples/s lr: N/A  
+[04/03 09:23:06] lb.utils.events INFO:  eta: 0:02:27  iteration: 201/220  consumed_samples: 103424  total_loss: 7.902  lm_loss: 7.204  sop_loss: 0.6947  time: 8.1858 s/iter  data_time: 0.0181 s/iter total_throughput: 62.55 samples/s lr: N/A  
+[04/03 09:23:15] lb.utils.events INFO:  eta: 0:02:19  iteration: 202/220  consumed_samples: 103936  total_loss: 7.9  lm_loss: 7.203  sop_loss: 0.6946  time: 8.1859 s/iter  data_time: 0.0181 s/iter total_throughput: 62.55 samples/s lr: N/A  
+[04/03 09:23:23] lb.utils.events INFO:  eta: 0:02:11  iteration: 203/220  consumed_samples: 104448  total_loss: 7.898  lm_loss: 7.203  sop_loss: 0.6945  time: 8.1864 s/iter  data_time: 0.0181 s/iter total_throughput: 62.54 samples/s lr: N/A  
+[04/03 09:23:31] lb.utils.events INFO:  eta: 0:02:02  iteration: 204/220  consumed_samples: 104960  total_loss: 7.898  lm_loss: 7.203  sop_loss: 0.6945  time: 8.1865 s/iter  data_time: 0.0181 s/iter total_throughput: 62.54 samples/s lr: N/A  
+[04/03 09:23:39] lb.utils.events INFO:  eta: 0:01:54  iteration: 205/220  consumed_samples: 105472  total_loss: 7.897  lm_loss: 7.202  sop_loss: 0.6944  time: 8.1859 s/iter  data_time: 0.0180 s/iter total_throughput: 62.55 samples/s lr: N/A  
+[04/03 09:23:47] lb.utils.events INFO:  eta: 0:01:46  iteration: 206/220  consumed_samples: 105984  total_loss: 7.897  lm_loss: 7.202  sop_loss: 0.6944  time: 8.1853 s/iter  data_time: 0.0182 s/iter total_throughput: 62.55 samples/s lr: N/A  
+[04/03 09:23:56] lb.utils.events INFO:  eta: 0:01:38  iteration: 207/220  consumed_samples: 106496  total_loss: 7.896  lm_loss: 7.201  sop_loss: 0.6943  time: 8.1856 s/iter  data_time: 0.0182 s/iter total_throughput: 62.55 samples/s lr: N/A  
+[04/03 09:24:04] lb.utils.events INFO:  eta: 0:01:30  iteration: 208/220  consumed_samples: 107008  total_loss: 7.895  lm_loss: 7.201  sop_loss: 0.6943  time: 8.1850 s/iter  data_time: 0.0182 s/iter total_throughput: 62.55 samples/s lr: N/A  
+[04/03 09:24:12] lb.utils.events INFO:  eta: 0:01:21  iteration: 209/220  consumed_samples: 107520  total_loss: 7.895  lm_loss: 7.201  sop_loss: 0.6943  time: 8.1851 s/iter  data_time: 0.0180 s/iter total_throughput: 62.55 samples/s lr: N/A  
+[04/03 09:24:20] lb.utils.events INFO:  eta: 0:01:13  iteration: 210/220  consumed_samples: 108032  total_loss: 7.894  lm_loss: 7.201  sop_loss: 0.6943  time: 8.1849 s/iter  data_time: 0.0180 s/iter total_throughput: 62.55 samples/s lr: N/A  
+[04/03 09:24:28] lb.utils.events INFO:  eta: 0:01:05  iteration: 211/220  consumed_samples: 108544  total_loss: 7.894  lm_loss: 7.2  sop_loss: 0.6943  time: 8.1845 s/iter  data_time: 0.0180 s/iter total_throughput: 62.56 samples/s lr: N/A  
+[04/03 09:24:36] lb.utils.events INFO:  eta: 0:00:57  iteration: 212/220  consumed_samples: 109056  total_loss: 7.894  lm_loss: 7.199  sop_loss: 0.6943  time: 8.1842 s/iter  data_time: 0.0182 s/iter total_throughput: 62.56 samples/s lr: N/A  
+[04/03 09:24:44] lb.utils.events INFO:  eta: 0:00:49  iteration: 213/220  consumed_samples: 109568  total_loss: 7.894  lm_loss: 7.197  sop_loss: 0.6942  time: 8.1837 s/iter  data_time: 0.0184 s/iter total_throughput: 62.56 samples/s lr: N/A  
+[04/03 09:24:53] lb.utils.events INFO:  eta: 0:00:40  iteration: 214/220  consumed_samples: 110080  total_loss: 7.893  lm_loss: 7.197  sop_loss: 0.6942  time: 8.1838 s/iter  data_time: 0.0185 s/iter total_throughput: 62.56 samples/s lr: N/A  
+[04/03 09:25:01] lb.utils.events INFO:  eta: 0:00:32  iteration: 215/220  consumed_samples: 110592  total_loss: 7.893  lm_loss: 7.197  sop_loss: 0.6942  time: 8.1839 s/iter  data_time: 0.0187 s/iter total_throughput: 62.56 samples/s lr: N/A  
+[04/03 09:25:09] lb.utils.events INFO:  eta: 0:00:24  iteration: 216/220  consumed_samples: 111104  total_loss: 7.891  lm_loss: 7.197  sop_loss: 0.6942  time: 8.1843 s/iter  data_time: 0.0185 s/iter total_throughput: 62.56 samples/s lr: N/A  
+[04/03 09:25:17] lb.utils.events INFO:  eta: 0:00:16  iteration: 217/220  consumed_samples: 111616  total_loss: 7.891  lm_loss: 7.197  sop_loss: 0.6942  time: 8.1839 s/iter  data_time: 0.0185 s/iter total_throughput: 62.56 samples/s lr: N/A  
+[04/03 09:25:25] lb.utils.events INFO:  eta: 0:00:08  iteration: 218/220  consumed_samples: 112128  total_loss: 7.891  lm_loss: 7.196  sop_loss: 0.6941  time: 8.1841 s/iter  data_time: 0.0183 s/iter total_throughput: 62.56 samples/s lr: N/A  
+[04/03 09:25:34] lb.utils.events INFO:  eta: 0:00:00  iteration: 219/220  consumed_samples: 112640  total_loss: 7.89  lm_loss: 7.196  sop_loss: 0.6941  time: 8.1843 s/iter  data_time: 0.0189 s/iter total_throughput: 62.56 samples/s lr: N/A  
+[04/03 09:25:34] lb.engine.hooks INFO: Overall training speed: 218 iterations in 0:29:44 (8.1843 s / it)
+[04/03 09:25:34] lb.engine.hooks INFO: Total training time: 0:29:47 (0:00:03 on hooks)
