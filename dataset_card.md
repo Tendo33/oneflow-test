@@ -1,7 +1,7 @@
-- [数据集介绍/Introduction](#1-数据集介绍introduction)
-- [数据集详情/Details](#2-数据集详情details)
-- [tags字段/Available Labels](#3-tags字段available-labels)
-- [过滤步骤/Filter Setups](#4-过滤步骤filter-setups)
+- [1.数据集介绍/Introduction](#1-数据集介绍introduction)
+- [2.数据集详情/Details](#2-数据集详情details)
+- [3.tags字段/Available Labels](#3-tags字段available-labels)
+- [4.过滤步骤/Filter Setups](#4-过滤步骤filter-setups)
 
 ## 1. 数据集介绍/Introduction
 
