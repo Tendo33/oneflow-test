@@ -17,8 +17,8 @@ tasks:
 # 目录/Table of Contents
 
 
-- [模型介绍/Introduction](#Introduction)
-- [训练详情/Training Details](#Training)
+- [数据集介绍/Introduction](#Introduction)
+- [数据集详情/Training Details](#Detail)
 - [快速开始/Quick Start](#Start)
 
 ## <span id="Introduction">数据集介绍/Introduction</span>
@@ -29,7 +29,7 @@ tasks:
 
 此外，为了确保公文的专业性和严谨性，该模型严格遵循各类公文的撰写规范和行文逻辑，力求做到措辞准确、表达清晰、结构严谨，助力用户轻松完成高质量的公文撰写任务，有效减轻了行政办公人员的工作负担，提升了办公效率。
 
-## <span id="Training">数据集详情/Training Details</span>
+## <span id="Detail">数据集详情/Training Details</span>
 
 - abstract
 
