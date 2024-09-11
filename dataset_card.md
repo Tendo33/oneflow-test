@@ -1,9 +1,9 @@
-- [数据集介绍/Introduction](#数据集介绍introduction)
-- [数据集详情/Details](#数据集详情details)
-- [tags字段/Available Labels](#tags字段available-labels)
-- [过滤步骤/Filter Setups](#过滤步骤filter-setups)
+- [数据集介绍/Introduction](#1数据集介绍introduction)
+- [数据集详情/Details](#2数据集详情details)
+- [tags字段/Available Labels](#3tags字段available-labels)
+- [过滤步骤/Filter Setups](#4过滤步骤filter-setups)
 
-## 数据集介绍/Introduction
+## 1. 数据集介绍/Introduction
 
 该数据集是用于Hermes 2 Pro系列模型的结构化输出和函数调用数据的汇编。
 
@@ -11,7 +11,7 @@
 
 数据集涵盖了各种对话场景，要求AI代理解释查询并执行适当的单个或多个函数调用。
 
-## 数据集详情/Details
+## 2. 数据集详情/Details
 
 - **abstract**
 
@@ -69,7 +69,7 @@
 
 	
 
-## tags字段/Available Labels
+## 3. tags字段/Available Labels
 
 * **Input Length**: The total number of characters in the instructions.
 * **Output Length**: The total number of characters in the responses.
@@ -81,7 +81,7 @@
 * **Reward**: The output of the reward model given the specific instruction-response pair.
 * **Language**: The language of the instruction.
 
-## 过滤步骤/Filter Setups
+## 4. 过滤步骤/Filter Setups
 
 * **Input Quality**: >= average
 * **Instruction Reward**: >=-10
