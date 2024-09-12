@@ -25,7 +25,7 @@
 
 - **example**
 
-	```json
+```json
 	{
 	    "uuid": "67805005-1816-5c21-a044-67acd6fa5056",
 	    "model": "Qwen/Qwen2-72B-Instruct",
