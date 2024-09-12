@@ -26,49 +26,49 @@
 - **example**
 
 ```json
-	{
-	    "uuid": "67805005-1816-5c21-a044-67acd6fa5056",
-	    "model": "Qwen/Qwen2-72B-Instruct",
-	    "gen_input_configs": {
-	        "temperature": 1.0,
-	        "top_p": 1.0,
-	        "input_generator": "Qwen/Qwen2-72B-Instruct",
-	        "seed": null,
-	        "extract_input": "<|im_start|>user\n",
-	    },
-	    "instruction": "将一篇英文文章翻译成中文。",
-	    "response": "当然，我很乐意帮助你将英文文章翻译成中文。请将文章内容提供给我，我将尽快为您翻译。不过，由于我无法直接接收文件或长篇文本，您可以将文章的主要部分或关键段落粘贴在消息中，我将尽力为您翻译。如果文章过长，您可以分多次发送，或者提供文章的链接，如果可能的话。请将文章内容发给我，我将开始翻译。请注意，虽然我会尽力提供准确的翻译，但有些文化背景、专业术语或特定表达可能需要额外的上下文才能完全准确地翻译。如果有任何具体要求或需要特别注意的地方，请随时告诉我。期待收到文章内容，以便开始翻译工作。",
-	    "conversations": [
-	        {"from": "human", "value": "将一篇英文文章翻译成中文。"},
-	        {
-	            "from": "gpt",
-	            "value": "当然，我很乐意帮助你将英文文章翻译成中文。请将文章内容提供给我，我将尽快为您翻译。不过，由于我无法直接接收文件或长篇文本，您可以将文章的主要部分或关键段落粘贴在消息中，我将尽力为您翻译。如果文章过长，您可以分多次发送，或者提供文章的链接，如果可能的话。请将文章内容发给我，我将开始翻译。请注意，虽然我会尽力提供准确的翻译，但有些文化背景、专业术语或特定表达可能需要额外的上下文才能完全准确地翻译。如果有任何具体要求或需要特别注意的地方，请随时告诉我。期待收到文章内容，以便开始翻译工作。",
-	        },
-	    ],
-	    "task_category": "Editing",
-	    "other_task_category": ["Translation"],
-	    "task_category_generator": "meta-llama/Meta-Llama-3-8B-Instruct",
-	    "difficulty": "easy",
-	    "intent": "The user wants to translate an English article into Chinese.",
-	    "knowledge": "To solve this problem, the models need to know how to perform machine translation, specifically translating English text to Chinese.",
-	    "difficulty_generator": "meta-llama/Meta-Llama-3-8B-Instruct",
-	    "input_quality": "average",
-	    "quality_explanation": "The query is very short and lacks specific information about the article to be translated, such as the topic, length, and tone. It also does not specify the type of translation required, such as formal or informal. However, it is clear that the user wants to translate an English article into Chinese.",
-	    "quality_generator": "meta-llama/Meta-Llama-3-8B-Instruct",
-	    "llama_guard_2": "safe",
-	    "reward_model": "sfairXC/FsfairX-LLaMA3-RM-v0.1",
-	    "instruct_reward": -4.5078125,
-	    "min_neighbor_distance": 2.1457672119140625e-06,
-	    "repeat_count": 3,
-	    "min_similar_uuid": "67805005-1816-5c21-a044-67acd6fa5056",
-	    "instruction_length": 13,
-	    "response_length": 243,
-	    "language": "ZH",
-	}
-	
+{
+    "uuid": "67805005-1816-5c21-a044-67acd6fa5056",
+    "model": "Qwen/Qwen2-72B-Instruct",
+    "gen_input_configs": {
+        "temperature": 1.0,
+        "top_p": 1.0,
+        "input_generator": "Qwen/Qwen2-72B-Instruct",
+        "seed": null,
+        "extract_input": "<|im_start|>user\n",
+    },
+    "instruction": "将一篇英文文章翻译成中文。",
+    "response": "当然，我很乐意帮助你将英文文章翻译成中文。请将文章内容提供给我，我将尽快为您翻译。不过，由于我无法直接接收文件或长篇文本，您可以将文章的主要部分或关键段落粘贴在消息中，我将尽力为您翻译。如果文章过长，您可以分多次发送，或者提供文章的链接，如果可能的话。请将文章内容发给我，我将开始翻译。请注意，虽然我会尽力提供准确的翻译，但有些文化背景、专业术语或特定表达可能需要额外的上下文才能完全准确地翻译。如果有任何具体要求或需要特别注意的地方，请随时告诉我。期待收到文章内容，以便开始翻译工作。",
+    "conversations": [
+        {"from": "human", "value": "将一篇英文文章翻译成中文。"},
+        {
+            "from": "gpt",
+            "value": "当然，我很乐意帮助你将英文文章翻译成中文。请将文章内容提供给我，我将尽快为您翻译。不过，由于我无法直接接收文件或长篇文本，您可以将文章的主要部分或关键段落粘贴在消息中，我将尽力为您翻译。如果文章过长，您可以分多次发送，或者提供文章的链接，如果可能的话。请将文章内容发给我，我将开始翻译。请注意，虽然我会尽力提供准确的翻译，但有些文化背景、专业术语或特定表达可能需要额外的上下文才能完全准确地翻译。如果有任何具体要求或需要特别注意的地方，请随时告诉我。期待收到文章内容，以便开始翻译工作。",
+        },
+    ],
+    "task_category": "Editing",
+    "other_task_category": ["Translation"],
+    "task_category_generator": "meta-llama/Meta-Llama-3-8B-Instruct",
+    "difficulty": "easy",
+    "intent": "The user wants to translate an English article into Chinese.",
+    "knowledge": "To solve this problem, the models need to know how to perform machine translation, specifically translating English text to Chinese.",
+    "difficulty_generator": "meta-llama/Meta-Llama-3-8B-Instruct",
+    "input_quality": "average",
+    "quality_explanation": "The query is very short and lacks specific information about the article to be translated, such as the topic, length, and tone. It also does not specify the type of translation required, such as formal or informal. However, it is clear that the user wants to translate an English article into Chinese.",
+    "quality_generator": "meta-llama/Meta-Llama-3-8B-Instruct",
+    "llama_guard_2": "safe",
+    "reward_model": "sfairXC/FsfairX-LLaMA3-RM-v0.1",
+    "instruct_reward": -4.5078125,
+    "min_neighbor_distance": 2.1457672119140625e-06,
+    "repeat_count": 3,
+    "min_similar_uuid": "67805005-1816-5c21-a044-67acd6fa5056",
+    "instruction_length": 13,
+    "response_length": 243,
+    "language": "ZH",
+}
+
 ```
 
-	
+​	
 
 ## 3. tags字段/Available Labels
 
